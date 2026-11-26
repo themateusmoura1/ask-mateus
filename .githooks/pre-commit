@@ -1,0 +1,3 @@
+#!/bin/sh
+# Blocks commits that include real knowledge files or secrets.
+exec node scripts/check-staged.mjs

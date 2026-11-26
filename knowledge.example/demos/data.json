@@ -1,0 +1,156 @@
+{
+  "type": "data",
+  "id": "data",
+  "title": "Atlas, the data agent",
+  "starter": "Ask Atlas about the sales numbers",
+  "triggers": [
+    "data agent",
+    "sales dashboard",
+    "sales numbers",
+    "ask the data",
+    "atlas",
+    "dashboard demo"
+  ],
+  "intro": "This is Atlas, a data agent. Ask it about Lanterna Books (made up)'s sales in plain words. It shows the answer, the query it ran and the rows it came from.",
+  "disclaimer": "A working re-creation. Lanterna Books (made up) and every number in it are made up. The model only describes a query. Code runs it and writes the answer.",
+  "source": "stock-digest",
+  "agentName": "Atlas",
+  "company": "Lanterna Books (made up)",
+  "currency": "€",
+  "table": "monthly_sales",
+  "examples": [
+    "What were sales by market?",
+    "What is the return on ad spend by market?",
+    "Show revenue month on month",
+    "How many orders in Spain over the last 3 months?"
+  ],
+  "rows": [
+    {
+      "month": "2026-06",
+      "market": "Portugal",
+      "revenue": 21000,
+      "orders": 875,
+      "ad_spend": 6360
+    },
+    {
+      "month": "2026-06",
+      "market": "Spain",
+      "revenue": 34000,
+      "orders": 1545,
+      "ad_spend": 12140
+    },
+    {
+      "month": "2026-06",
+      "market": "France",
+      "revenue": 18000,
+      "orders": 667,
+      "ad_spend": 6000
+    },
+    {
+      "month": "2026-07",
+      "market": "Portugal",
+      "revenue": 22260,
+      "orders": 928,
+      "ad_spend": 6590
+    },
+    {
+      "month": "2026-07",
+      "market": "Spain",
+      "revenue": 36040,
+      "orders": 1638,
+      "ad_spend": 12510
+    },
+    {
+      "month": "2026-07",
+      "market": "France",
+      "revenue": 19080,
+      "orders": 707,
+      "ad_spend": 6190
+    },
+    {
+      "month": "2026-08",
+      "market": "Portugal",
+      "revenue": 20370,
+      "orders": 849,
+      "ad_spend": 5890
+    },
+    {
+      "month": "2026-08",
+      "market": "Spain",
+      "revenue": 32980,
+      "orders": 1499,
+      "ad_spend": 11140
+    },
+    {
+      "month": "2026-08",
+      "market": "France",
+      "revenue": 17460,
+      "orders": 647,
+      "ad_spend": 5530
+    },
+    {
+      "month": "2026-09",
+      "market": "Portugal",
+      "revenue": 23520,
+      "orders": 980,
+      "ad_spend": 6640
+    },
+    {
+      "month": "2026-09",
+      "market": "Spain",
+      "revenue": 38080,
+      "orders": 1731,
+      "ad_spend": 12530
+    },
+    {
+      "month": "2026-09",
+      "market": "France",
+      "revenue": 20160,
+      "orders": 747,
+      "ad_spend": 6220
+    },
+    {
+      "month": "2026-10",
+      "market": "Portugal",
+      "revenue": 25200,
+      "orders": 1050,
+      "ad_spend": 6960
+    },
+    {
+      "month": "2026-10",
+      "market": "Spain",
+      "revenue": 40800,
+      "orders": 1855,
+      "ad_spend": 13080
+    },
+    {
+      "month": "2026-10",
+      "market": "France",
+      "revenue": 21600,
+      "orders": 800,
+      "ad_spend": 6510
+    },
+    {
+      "month": "2026-11",
+      "market": "Portugal",
+      "revenue": 27510,
+      "orders": 1146,
+      "ad_spend": 7440
+    },
+    {
+      "month": "2026-11",
+      "market": "Spain",
+      "revenue": 44540,
+      "orders": 2025,
+      "ad_spend": 13920
+    },
+    {
+      "month": "2026-11",
+      "market": "France",
+      "revenue": 23580,
+      "orders": 873,
+      "ad_spend": 6940
+    }
+  ],
+  "_todo": "A made-up data demo for the made-up person. Copy this shape for your own."
+}

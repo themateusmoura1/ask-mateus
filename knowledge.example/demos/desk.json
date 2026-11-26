@@ -1,0 +1,50 @@
+{
+  "type": "flow",
+  "flow": "desk",
+  "id": "desk",
+  "order": 30,
+  "title": "The company assistant, handing work over",
+  "starter": "Show me the company assistant handing work over",
+  "triggers": ["company assistant handing", "handing work over", "handover demo", "orchestrator demo"],
+  "intro": "This is the company assistant. It answers from the company's approved pages and shows which one it used. When a task belongs to a colleague, it hands it to that colleague's personal agent and you see the receipt.",
+  "disclaimer": "A working re-creation. Casa Aurora (made up) and everything about it are made up.",
+  "source": "returns-agent",
+  "agentName": "Hub",
+  "role": "The company's orchestrator. Answers from approved company pages, and hands a colleague's work to that colleague's own agent.",
+  "company": "Casa Aurora (made up)",
+  "colleague": {
+    "name": "Inês (made up), in finance",
+    "agent": "Inês's personal agent",
+    "may": ["read finance documents", "draft emails for Inês"],
+    "mayNot": ["send anything without Inês", "read other people's chats"]
+  },
+  "pages": [
+    { "id": "delivery", "title": "Delivery times", "body": "Stock items arrive in 3 to 5 working days in mainland Portugal. Made-to-order pieces take 4 to 6 weeks. Deliveries to the islands take 5 working days more." },
+    { "id": "returns", "title": "Customer returns", "body": "A customer can return a stock item within 30 days if it is unused and in its original packaging. Made-to-order pieces cannot be returned. Refunds are paid within 5 working days of the item arriving back." },
+    { "id": "holidays", "title": "Holiday requests", "body": "Ask for holiday at least two weeks ahead in the team calendar. Your team lead approves it. No more than two people from one team can be off at the same time." },
+    { "id": "expenses", "title": "Expenses", "body": "Hand in receipts within the month. Anything over 100 euros needs your team lead's approval before you spend it." }
+  ],
+  "scenarios": [
+    {
+      "id": "q-delivery",
+      "label": "How long does a made-to-order table take to arrive?",
+      "kind": "question",
+      "text": "How long does a made-to-order table take to arrive?",
+      "prepared": { "page": "delivery", "answer": "A made-to-order piece takes 4 to 6 weeks. Deliveries to the islands take 5 working days more." }
+    },
+    {
+      "id": "t-invoice",
+      "label": "Can someone send the Lisbon showroom invoice again?",
+      "kind": "task",
+      "text": "Can someone send the Lisbon showroom invoice again? The customer says the PDF never arrived.",
+      "prepared": { "title": "Send an invoice again", "summary": "A customer says the PDF of the Lisbon showroom invoice never arrived. Please send it again." }
+    },
+    {
+      "id": "q-private",
+      "label": "What discount did we agree with the Porto hotel?",
+      "kind": "question",
+      "text": "What discount did we agree with the Porto hotel?",
+      "prepared": { "page": null, "answer": "" }
+    }
+  ]
+}

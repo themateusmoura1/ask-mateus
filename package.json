@@ -1,0 +1,34 @@
+{
+  "name": "ask-mateus",
+  "version": "0.3.0",
+  "private": true,
+  "description": "A private, voice-first assistant that answers questions about one person from a small set of notes.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "prepare": "git config core.hooksPath .githooks || exit 0",
+    "postinstall": "npm --prefix web install --no-fund --no-audit",
+    "build:web": "npm --prefix web run build",
+    "dev:web": "npm --prefix web run dev",
+    "knowledge:push": "node scripts/knowledge.mjs",
+    "predev": "npm run build:web && npm run knowledge:push",
+    "dev": "wrangler dev",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit && npm --prefix web run typecheck",
+    "check-staged": "node scripts/check-staged.mjs",
+    "break-it": "node scripts/break-it.mjs",
+    "check-account": "node scripts/check-account.mjs",
+    "cf": "node scripts/check-account.mjs",
+    "predeploy": "npm run build:web",
+    "deploy": "node scripts/check-account.mjs deploy"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.14.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "latest",
+    "typescript": "^5.9.0",
+    "vitest": "^5.1.2",
+    "wrangler": "^4.168.0"
+  }
+}

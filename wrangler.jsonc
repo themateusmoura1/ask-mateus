@@ -1,0 +1,70 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ask-mateus",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  // One private KV namespace holds everything that is not code: the notes,
+  // the hashed access codes, the logs, the counters and the pending requests.
+  // Local dev simulates it on disk under .wrangler/ (git-ignored).
+  // Before the first deploy, create it and paste the id here:
+  //   npx wrangler kv namespace create STORE
+  "kv_namespaces": [{ "binding": "STORE", "id": "2258cbcd3aad407fb9a8c0c4b2208cfb" }],
+
+  // The AI Gateway token, read from Cloudflare Secrets Store. The provider keys
+  // (Anthropic, OpenAI) are stored in the gateway itself, so the Worker holds none.
+  "secrets_store_secrets": [{ "binding": "AI_GATEWAY_TOKEN", "store_id": "a60ceb89503743de863fedca6b94f850", "secret_name": "AIGATEWAY" }],
+
+  // One Durable Object per visitor session. It holds the WebSocket that
+  // carries the live trace and the "your request was approved" update.
+  "durable_objects": { "bindings": [{ "name": "LIVE", "class_name": "SessionRoom" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["SessionRoom"] }],
+
+  // Where the site lives. Leave both lines out to use the free
+  // <name>.<account>.workers.dev address. To use your own domain, set SITE_URL
+  // below and uncomment the route.
+  "routes": [{ "pattern": "ask.mateusmoura.dev", "custom_domain": true }],
+
+  // Nothing secret goes here. Secrets live in .dev.vars locally and in
+  // `wrangler secret put` once deployed.
+  "vars": {
+    // The public address, used in the link inside request notifications.
+    // Empty means "whatever address the request came in on".
+    "SITE_URL": "https://ask.mateusmoura.dev",
+    // Which providers the AI Gateway holds a key for. The gateway address itself
+    // is the Worker secret AI_GATEWAY_URL, because it contains the account id.
+    "GATEWAY_PROVIDERS": "anthropic,openai",
+    "MODEL": "claude-haiku-5-5",
+    // Dollars per million tokens for MODEL. Used only for the daily spend cap.
+    "PRICE_INPUT_PER_MTOK": "0.1",
+    "PRICE_OUTPUT_PER_MTOK": "0.5",
+    // The demos route work to two models by score. Below 70 goes to the fast
+    // one, 70 and up to the strong one. Prices are dollars per million tokens.
+    "DEMO_FAST_MODEL": "claude-haiku-5-5",
+    "DEMO_FAST_PRICE_INPUT_PER_MTOK": "0.1",
+    "DEMO_FAST_PRICE_OUTPUT_PER_MTOK": "0.5",
+    "DEMO_STRONG_MODEL": "claude-sonnet-5-5",
+    "DEMO_STRONG_PRICE_INPUT_PER_MTOK": "2",
+    "DEMO_STRONG_PRICE_OUTPUT_PER_MTOK": "10",
+    "DAILY_SPEND_CAP_USD": "2",
+    "VISITOR_DAILY_MESSAGES": "20",
+    "VISITOR_DAILY_CONTACT_REQUESTS": "3",
+    "VISITOR_DAILY_WRONG_CODES": "8",
+    "MAX_MESSAGE_CHARS": "500",
+    // How long a visitor stays signed in after entering a code.
+    "SESSION_DAYS": "7",
+    // Logs and contact requests are deleted after this many days.
+    "LOG_RETENTION_DAYS": "90",
+    // With an OpenAI key set: embedding search over the notes, and the OpenAI voice.
+    "OPENAI_EMBEDDING_MODEL": "text-embedding-3-small",
+    "OPENAI_EMBEDDING_PRICE_PER_MTOK": "0.02",
+    "OPENAI_TTS_MODEL": "gpt-4o-mini-tts",
+    "OPENAI_TTS_VOICE": "cedar",
+    "DAILY_VOICE_CHARS": "20000"
+  },
+  "observability": { "enabled": true }
+}

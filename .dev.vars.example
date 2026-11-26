@@ -1,0 +1,38 @@
+# Copy this file to .dev.vars and fill in what you have.
+# .dev.vars is git-ignored. Never commit real keys.
+# Every line is optional on your own machine. With nothing set, the site runs
+# in stub mode and the access code is "demo".
+
+# Claude answers. Without this the assistant quotes the notes by keyword match.
+ANTHROPIC_API_KEY=
+
+# Recommended once deployed: keep the provider keys in Cloudflare AI Gateway and
+# call through it. Then ANTHROPIC_API_KEY and OPENAI_API_KEY above stay empty.
+# https://gateway.ai.cloudflare.com/v1/<account id>/<gateway name>
+AI_GATEWAY_URL=
+# The gateway's token. Deployed, this is a Secrets Store binding in wrangler.jsonc.
+AI_GATEWAY_TOKEN=
+
+# OpenAI: embedding search over the notes, and the spoken answers.
+OPENAI_API_KEY=
+
+
+# Where "talk to the real person" requests are announced. Pick one or both.
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
+# Optional. Any long random string. Turns on the Approve and Decline buttons
+# under each Telegram notification (deployed site only, see the README).
+TELEGRAM_WEBHOOK_SECRET=
+RESEND_API_KEY=
+NOTIFY_EMAIL_TO=
+NOTIFY_EMAIL_FROM=
+
+# Password for /admin.html: requests, access codes and logs.
+# Without this the admin routes do not exist.
+ADMIN_TOKEN=
+
+# Signs the session cookie. Any long random string. Required once deployed.
+SESSION_SECRET=
+
+# Any long random string. Used to hash visitor IPs before counting them.
+VISITOR_SALT=

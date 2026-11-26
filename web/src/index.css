@@ -1,0 +1,135 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/manrope";
+@import "@fontsource/caveat/600.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Inter Variable", system-ui, sans-serif;
+  --font-heading: "Manrope Variable", "Inter Variable", system-ui, sans-serif;
+  --ease-out-soft: cubic-bezier(0.23, 1, 0.32, 1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  /* Two extras: quieter small print, and link text that passes contrast in both themes. */
+  --color-dim: var(--dim);
+  --color-link: var(--link);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+/* Light and pastel is the default. */
+:root {
+  --background: #f6f7fe;
+  --foreground: #172039;
+  --card: #ffffff;
+  --card-foreground: #172039;
+  --popover: #ffffff;
+  --popover-foreground: #172039;
+  --primary: #0a49ed;
+  --primary-foreground: #ffffff;
+  --secondary: #edf1ff;
+  --secondary-foreground: #172039;
+  --muted: #edf1ff;
+  --muted-foreground: #4b5973;
+  --accent: #edf1ff;
+  --accent-foreground: #172039;
+  --destructive: #b3261e;
+  --border: #dde3f3;
+  --input: #bcc8e2;
+  --ring: #0a49ed;
+  --dim: #6f7c95;
+  --link: #0a3fd0;
+  --radius: 0.6875rem;
+  --glow-1: #e3e9ff;
+  --glow-2: #fde9f1;
+  --orb-light: #dfe7ff;
+  --orb: #8ea8ff;
+  --orb-deep: #5b78f0;
+  --orb-warm: #ffc9dc;
+}
+
+.dark {
+  --background: #0e1118;
+  --foreground: #eeeae2;
+  --card: #151a24;
+  --card-foreground: #eeeae2;
+  --popover: #151a24;
+  --popover-foreground: #eeeae2;
+  --primary: #0a49ed;
+  --primary-foreground: #ffffff;
+  --secondary: #1b2130;
+  --secondary-foreground: #eeeae2;
+  --muted: #1b2130;
+  --muted-foreground: #a7a49c;
+  --accent: #1b2130;
+  --accent-foreground: #eeeae2;
+  --destructive: #ff8f7a;
+  --border: rgb(238 234 226 / 12%);
+  --input: rgb(238 234 226 / 24%);
+  --ring: #a3b8ff;
+  --dim: #85837d;
+  --link: #a3b8ff;
+  --glow-1: #141c33;
+  --glow-2: #1d1528;
+  --orb-light: #b9c9ff;
+  --orb: #4f76f2;
+  --orb-deep: #0a37b8;
+  --orb-warm: #c98fb0;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply text-foreground antialiased;
+    min-height: 100dvh;
+    /* Two soft pastel washes behind everything. */
+    background:
+      radial-gradient(60vw 50vh at 12% 0%, var(--glow-1), transparent 70%),
+      radial-gradient(50vw 45vh at 92% 8%, var(--glow-2), transparent 70%),
+      var(--background);
+    background-attachment: fixed;
+  }
+  h1, h2, h3 {
+    @apply font-heading font-semibold;
+    letter-spacing: -0.045em;
+  }
+  button:not(:disabled), [role="button"]:not(:disabled) {
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

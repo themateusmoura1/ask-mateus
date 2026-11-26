@@ -1,0 +1,4 @@
+{
+  "allowedAccountId": "the 32-character id of the one Cloudflare account this project may use",
+  "blockedAccountIds": ["ids of accounts it must never use, for example an employer's"]
+}

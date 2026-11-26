@@ -1,0 +1,225 @@
+{
+  "_todo": "A made-up demo for the made-up person. Copy this shape for your own.",
+  "id": "returns",
+  "title": "The returns agent",
+  "starter": "Show me the returns agent working",
+  "triggers": [
+    "returns agent working",
+    "returns demo",
+    "show me the returns",
+    "score a return"
+  ],
+  "intro": "Here is the returns agent working on a made-up order. One agent checks the request against the policy and scores it. The other drafts the reply and waits for a person. Pick a request to watch it run.",
+  "disclaimer": "A working re-creation with made-up orders. Nothing is sent.",
+  "source": "returns-agent",
+  "agents": [
+    {
+      "id": "checker",
+      "name": "Checker",
+      "role": "Finds the order and scores the request against the policy. It never replies to customers."
+    },
+    {
+      "id": "writer",
+      "name": "Writer",
+      "role": "Drafts the reply and waits for a person to approve it."
+    }
+  ],
+  "researcher": "checker",
+  "sender": "writer",
+  "criteria": [
+    {
+      "id": "window",
+      "label": "Inside the return window",
+      "max": 40
+    },
+    {
+      "id": "condition",
+      "label": "Condition evidence",
+      "max": 35
+    },
+    {
+      "id": "history",
+      "label": "Customer history",
+      "max": 25
+    }
+  ],
+  "paths": [
+    {
+      "min": 70,
+      "label": "70 to 100: refund offered, and a person approves the exact reply.",
+      "research": "Order, delivery date and photos checked.",
+      "approval": true,
+      "model": "strong"
+    },
+    {
+      "min": 40,
+      "label": "40 to 69: store credit offered, and a person approves the reply.",
+      "research": "Order and delivery date checked.",
+      "approval": true,
+      "model": "fast"
+    },
+    {
+      "min": 0,
+      "label": "Below 40: a short reply asking for more detail, sent without approval.",
+      "research": "Order checked.",
+      "approval": false,
+      "model": "fast"
+    }
+  ],
+  "gates": [
+    {
+      "id": "found",
+      "label": "The order was found"
+    },
+    {
+      "id": "duplicate",
+      "label": "No earlier reply to this request"
+    }
+  ],
+  "handoff": "Checker saves its findings on the order and notifies {sender}.",
+  "approval": {
+    "expiresHours": 24,
+    "covers": "the exact recipient, subject and body"
+  },
+  "sendRules": [
+    "Sent during shop hours.",
+    "One reply per request."
+  ],
+  "cases": [
+    {
+      "id": "clear",
+      "name": "Order 1042 (made up)",
+      "summary": "A damaged book, returned within a week.",
+      "identity": "Order 1042 found, delivered 6 days ago.",
+      "mailbox": "The customer's own address on the order: reader@example.com.",
+      "evidence": [
+        {
+          "criterion": "window",
+          "points": 40,
+          "fact": "Requested 6 days after delivery. The window is 30 days.",
+          "source": "Order record"
+        },
+        {
+          "criterion": "condition",
+          "points": 30,
+          "fact": "Photo shows a torn cover.",
+          "source": "Customer's email attachment"
+        },
+        {
+          "criterion": "history",
+          "points": 20,
+          "fact": "Four earlier orders, no earlier returns.",
+          "source": "Customer record"
+        }
+      ],
+      "draft": {
+        "to": "reader@example.com",
+        "subject": "Your return for order 1042",
+        "body": "Hello,\n\nSorry the book arrived damaged. We will refund it in full. You don't need to send it back.\n\nLanterna Books"
+      }
+    },
+    {
+      "id": "unknown",
+      "name": "Order 9999 (made up)",
+      "summary": "A request for an order that can't be found.",
+      "identity": "No order with that number exists.",
+      "mailbox": "The address the request came from: someone@example.com.",
+      "evidence": [],
+      "failedGate": {
+        "id": "found",
+        "reason": "No such order. The agent reports that instead of guessing, and nothing is drafted.",
+        "short": "order not found"
+      }
+    }
+  ],
+  "offering": "Lanterna Books: a 30 day return window on books in resaleable condition.",
+  "variants": {
+    "acme": {
+      "label": "Acme",
+      "note": "Re-targeted for you. The same rules, scored against Acme's return policy.",
+      "offering": "Acme Outdoor: a 90 day return window on unused gear.",
+      "cases": [
+        {
+          "mailbox": "The customer's own address on the order: camper@example.com.",
+          "name": "Order A-77 (made up)",
+          "draft": {
+            "body": "Hello,\n\nThe tent is inside the 90 day window. As it has been used, we can offer store credit.\n\nAcme Outdoor",
+            "to": "camper@example.com",
+            "subject": "Your return for order A-77"
+          },
+          "summary": "A tent returned after two months.",
+          "id": "tent",
+          "identity": "Order A-77 found, delivered 61 days ago.",
+          "evidence": [
+            {
+              "criterion": "window",
+              "source": "Order record",
+              "points": 40,
+              "fact": "Requested 61 days after delivery. The window is 90 days."
+            },
+            {
+              "criterion": "condition",
+              "source": "Customer's email",
+              "points": 10,
+              "fact": "Customer says it was used once."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "routingNote": "The score also picks the model. Below 70 a small fast model writes the reply. From 70 up a stronger one does.",
+  "researchRun": {
+    "criteria": [
+      {
+        "id": "window",
+        "label": "Inside the return window",
+        "max": 40
+      },
+      {
+        "id": "condition",
+        "label": "Condition evidence",
+        "max": 35
+      },
+      {
+        "id": "repeat",
+        "label": "Repeat requests",
+        "max": 25
+      }
+    ],
+    "cases": [
+      {
+        "id": "check",
+        "name": "Order 2210 (made up)",
+        "summary": "A second return from the same customer this month.",
+        "identity": "Order 2210 found, delivered 12 days ago.",
+        "mailbox": "The customer's own address on the order: second@example.com.",
+        "evidence": [
+          {
+            "criterion": "window",
+            "points": 40,
+            "fact": "Requested 12 days after delivery.",
+            "source": "Order record"
+          },
+          {
+            "criterion": "condition",
+            "points": 20,
+            "fact": "No photo, described as unread.",
+            "source": "Customer's email"
+          },
+          {
+            "criterion": "history",
+            "points": 5,
+            "fact": "Second return this month.",
+            "source": "Customer record"
+          }
+        ],
+        "draft": {
+          "to": "second@example.com",
+          "subject": "Your return for order 2210",
+          "body": "Hello,\n\nThe book is inside the return window. We can offer store credit for it.\n\nLanterna Books"
+        }
+      }
+    ]
+  }
+}

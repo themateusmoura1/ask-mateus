@@ -1,0 +1,44 @@
+{
+  "type": "flow",
+  "flow": "support",
+  "id": "support",
+  "order": 50,
+  "title": "A support agent trained on a knowledge base",
+  "starter": "Show me the support agent",
+  "triggers": ["show me the support agent", "support agent demo", "help centre demo"],
+  "intro": "This is a support agent that answers from help articles written for it. It shows the article it used. When no article covers a question, it hands over to a person and does not guess.",
+  "disclaimer": "A working re-creation. Tabuleiro (made up), its product and its help articles are all made up.",
+  "source": "returns-agent",
+  "agentName": "Support agent",
+  "role": "Answers customers from help articles written for it, and hands over to a person when no article covers the question.",
+  "company": "Tabuleiro (made up)",
+  "pages": [
+    { "id": "game-code", "title": "Where to find and use your game code", "body": "Your game code is printed on the card inside the lid of the box. Open the app, go to Settings, then Redeem, and type the code. One code works on up to five devices." },
+    { "id": "missing-piece", "title": "A piece is missing or damaged", "body": "Send us your order number and a photo of the box contents through the form in the app, under Help. We post the replacement piece free of charge within 10 working days." },
+    { "id": "delivery", "title": "Delivery times", "body": "Orders to the UK arrive in 2 to 4 working days. Orders to the rest of Europe arrive in 5 to 8 working days. You get a tracking link by email when the order ships." },
+    { "id": "devices", "title": "Which devices the app works on", "body": "The app works on phones and tablets with iOS 15 or later, or Android 10 or later. It does not work on smart TVs." }
+  ],
+  "scenarios": [
+    {
+      "id": "q-code",
+      "label": "Where do I find my game code?",
+      "kind": "question",
+      "text": "Where do I find my game code?",
+      "prepared": { "page": "game-code", "answer": "Your code is printed on the card inside the lid of the box. In the app, go to Settings, then Redeem, and type it in." }
+    },
+    {
+      "id": "q-piece",
+      "label": "A token was missing from my box. What do I do?",
+      "kind": "question",
+      "text": "A token was missing from my box. What do I do?",
+      "prepared": { "page": "missing-piece", "answer": "Send your order number and a photo of the box contents through the form in the app, under Help. A replacement is posted free within 10 working days." }
+    },
+    {
+      "id": "q-refund",
+      "label": "I was charged twice. Can you refund one payment?",
+      "kind": "question",
+      "text": "I was charged twice for my order. Can you refund one payment?",
+      "prepared": { "page": null, "answer": "" }
+    }
+  ]
+}
