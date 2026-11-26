@@ -7,6 +7,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarBadge, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
+import { Spinner } from "@/components/ui/spinner";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CodeBlock, CodeBlockActions, CodeBlockContent, CodeBlockCopyButton, CodeBlockHeader, CodeBlockTitle } from "@/components/ui/code-block";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -474,6 +477,7 @@ function AgentView({ agent, index, onBack }: { agent: Agent; index: number; onBa
   const [error, setError] = useState("");
   const shown = useReveal(trace.length);
 
+  const [pane, setPane] = useState<"result" | "trace">("result"); // phones show one at a time
   const [decision, setDecision] = useState<Decision>(null);
   const [deciding, setDeciding] = useState(false);
   const input =
@@ -540,17 +544,17 @@ function AgentView({ agent, index, onBack }: { agent: Agent; index: number; onBa
   const ending = (r: DemoRun) => shown >= trace.length && (r.outcome === "blocked" ? <Blocked run={r} /> : r.draft && <Draft run={r} />);
 
   return (
-    <div className="grid gap-4">
-      <div className="flex flex-wrap items-center gap-4">
-        <Button variant="ghost" className="h-11 px-3" onClick={onBack}>
-          <ArrowLeft aria-hidden="true" /> All agents
+    <div className="grid grid-cols-1 gap-4 max-lg:pb-20">
+      <div className="flex items-center gap-3 lg:gap-4">
+        <Button variant="ghost" className="size-11 flex-none px-0 lg:w-auto lg:px-3" aria-label="All agents" onClick={onBack}>
+          <ArrowLeft aria-hidden="true" /> <span className="hidden lg:inline">All agents</span>
         </Button>
         <BotAvatar index={index} kind={lookOf(agent)} size={48} />
         <div className="min-w-0 flex-1 text-left">
-          <h2 className="text-xl tracking-[-0.02em]">{agent.name}</h2>
-          <p className="text-sm text-muted-foreground">{agent.role}</p>
+          <h2 className="text-lg tracking-[-0.02em] lg:text-xl">{agent.name}</h2>
+          <p className="text-sm text-muted-foreground max-lg:hidden">{agent.role}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-20 max-lg:border-t max-lg:bg-background/90 max-lg:px-4 max-lg:pt-3 max-lg:pb-[calc(12px+env(safe-area-inset-bottom))] max-lg:backdrop-blur-lg max-lg:[&>button]:flex-1">
           {next && (
             <Button variant="outline" className="h-11 px-4" disabled={!done} onClick={() => setTurn((n) => n + 1)}>
               <SkipForward aria-hidden="true" /> {next}
@@ -562,15 +566,32 @@ function AgentView({ agent, index, onBack }: { agent: Agent; index: number; onBa
         </div>
       </div>
 
+      <Tabs value={pane} onValueChange={(v) => setPane(v as "result" | "trace")} className="lg:hidden">
+        <TabsList className="h-11! w-full">
+          <TabsTrigger value="result">What it did</TabsTrigger>
+          <TabsTrigger value="trace">
+            Under the hood
+            {shown > 0 && <span className="ml-1 text-muted-foreground tabular-nums">{shown}</span>}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+      {pane === "result" && !done && !error && (
+        <button type="button" onClick={() => setPane("trace")} className="flex min-h-11 items-center gap-2.5 rounded-lg bg-card px-3.5 text-left text-sm ring-1 ring-foreground/10 lg:hidden">
+          <Spinner className="flex-none" />
+          <span className="min-w-0 flex-1 truncate">{trace[shown - 1]?.label ?? "Starting"}</span>
+          <ChevronRight className="size-4 flex-none text-muted-foreground" aria-hidden="true" />
+        </button>
+      )}
+
       <div className="grid items-start gap-4 lg:grid-cols-2">
         <TraceCard
           steps={busy && !trace.length ? WAITING : trace.slice(0, shown)}
           description="Every step the server takes for this run, as it happens."
           empty="Starting."
           expanded
-          className="lg:order-2"
+          className={cn("lg:order-2", pane !== "trace" && "max-lg:hidden")}
         />
-        <Card className="min-w-0 text-left lg:order-1">
+        <Card className={cn("min-w-0 text-left lg:order-1", pane !== "result" && "max-lg:hidden")}>
           <CardHeader>
             <CardTitle>{title}</CardTitle>
             <CardDescription>{hint}</CardDescription>
@@ -620,6 +641,62 @@ interface Props {
   onActive: (id: string) => void;
 }
 
+function AgentCard({ agent, index, onOpen, className }: { agent: Agent; index: number; onOpen: () => void; className?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className={cn(
+        "group flex h-full w-full flex-col gap-4 rounded-xl bg-card p-5 text-left ring-1 ring-foreground/10 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgb(23_32_57/0.10)] hover:ring-primary/50 focus-visible:ring-2 focus-visible:ring-primary",
+        className,
+      )}
+    >
+      <BotAvatar index={index} kind={lookOf(agent)} size={64} />
+      <span className="grid gap-1">
+        <span className="font-heading text-base font-semibold">{agent.name}</span>
+        <span className="text-sm text-muted-foreground">{agent.role}</span>
+      </span>
+      <span className="mt-auto inline-flex items-center gap-1 text-sm font-medium text-link">
+        Watch it work <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+      </span>
+    </button>
+  );
+}
+
+/** On a phone the agents sit side by side and are swiped through, one at a time. */
+function AgentCarousel({ agents, onOpen }: { agents: Agent[]; onOpen: (key: string) => void }) {
+  const [api, setApi] = useState<CarouselApi>();
+  const [at, setAt] = useState(0);
+  useEffect(() => {
+    if (!api) return;
+    const update = () => setAt(api.selectedScrollSnap());
+    update();
+    api.on("select", update);
+    return () => void api.off("select", update);
+  }, [api]);
+  return (
+    <div className="-mx-4 grid min-w-0 grid-cols-1 gap-4 sm:hidden">
+      <Carousel setApi={setApi} opts={{ align: "center" }} aria-label="Agents">
+        <CarouselContent className="-ml-3 px-[9%] py-1">
+          {agents.map((agent, i) => (
+            <CarouselItem key={agent.key} className="basis-full pl-3">
+              <AgentCard agent={agent} index={i} onOpen={() => onOpen(agent.key)} className={cn("min-h-64 transition-opacity", i !== at && "opacity-60")} />
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+      </Carousel>
+      <div className="flex items-center justify-center gap-1">
+        {agents.map((agent, i) => (
+          <button key={agent.key} type="button" aria-label={`Show ${agent.name}`} aria-current={i === at} onClick={() => api?.scrollTo(i)} className="grid size-7 place-items-center">
+            <span className={cn("h-2 rounded-full transition-all", i === at ? "w-5 bg-primary" : "w-2 bg-foreground/20")} />
+          </button>
+        ))}
+      </div>
+      <p className="text-center text-xs text-muted-foreground">Swipe to see the others. Tap one to watch it work.</p>
+    </div>
+  );
+}
+
 /** The Live demos tab: a shelf of agents. Pick one and watch it do its job. */
 export function Workbench({ config, active, onActive }: Props) {
   const [agents, setAgents] = useState<Agent[] | null>(null);
@@ -657,7 +734,7 @@ export function Workbench({ config, active, onActive }: Props) {
       <>
         <div className="grid justify-items-center gap-3 text-center">
           <h1 className="text-2xl tracking-[-0.03em] sm:text-3xl">Agents {config.firstName} built</h1>
-          <p className="max-w-[52ch] text-sm text-muted-foreground">Pick one and watch it work. The companies and numbers are made up, and nothing is sent.</p>
+          <p className="max-w-[52ch] text-sm text-muted-foreground">Pick one and watch it work. <span className="max-sm:hidden">The companies and numbers are made up, and nothing is sent.</span><span className="sm:hidden">All the data is made up.</span></p>
         </div>
         {error && (
           <Alert variant="destructive">
@@ -666,24 +743,12 @@ export function Workbench({ config, active, onActive }: Props) {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        <ul className="mx-auto grid w-full max-w-[1180px] gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {agents && <AgentCarousel agents={agents} onOpen={setOpen} />}
+        <ul className={cn("mx-auto grid w-full max-w-[1180px] gap-4 sm:grid-cols-2 lg:grid-cols-4", agents && "max-sm:hidden")}>
           {!agents && !error && [0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-52 rounded-xl" />)}
           {agents?.map((agent, i) => (
             <li key={agent.key}>
-              <button
-                type="button"
-                onClick={() => setOpen(agent.key)}
-                className="group flex h-full w-full flex-col gap-4 rounded-xl bg-card p-5 text-left ring-1 ring-foreground/10 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgb(23_32_57/0.10)] hover:ring-primary/50 focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <BotAvatar index={i} kind={lookOf(agent)} size={64} />
-                <span className="grid gap-1">
-                  <span className="font-heading text-base font-semibold">{agent.name}</span>
-                  <span className="text-sm text-muted-foreground">{agent.role}</span>
-                </span>
-                <span className="mt-auto inline-flex items-center gap-1 text-sm font-medium text-link">
-                  Watch it work <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-                </span>
-              </button>
+              <AgentCard agent={agent} index={i} onOpen={() => setOpen(agent.key)} />
             </li>
           ))}
         </ul>
@@ -691,5 +756,5 @@ export function Workbench({ config, active, onActive }: Props) {
     );
   }
 
-  return <div className="mx-auto grid max-w-[1280px] gap-6 px-4 pt-6 pb-16 sm:px-6">{body}</div>;
+  return <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-6 px-4 pt-6 pb-16 sm:px-6">{body}</div>;
 }

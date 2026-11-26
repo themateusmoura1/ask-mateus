@@ -124,7 +124,7 @@ export function Trace({ steps, live }: { steps: TraceStep[]; live: boolean }) {
   return (
     <>
       <TraceCard steps={steps} live={live} empty={empty} className="fixed top-24 right-6 hidden max-h-[calc(100dvh-240px)] w-[300px] overflow-y-auto xl:flex" />
-      <TraceDrawer steps={steps} live={live} empty={empty} className="mt-4 w-full max-w-[34em] xl:hidden" />
+      <TraceDrawer steps={steps} live={live} empty={empty} className={cn("mt-4 w-full max-w-[34em] xl:hidden", !steps.length && "max-sm:hidden")} />
     </>
   );
 }

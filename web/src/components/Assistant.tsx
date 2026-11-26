@@ -1,4 +1,4 @@
-import { ArrowRight, Mic } from "lucide-react";
+import { ArrowRight, Captions, CaptionsOff, Mic, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { ThemeToggle, Title } from "@/components/common";
@@ -258,7 +258,8 @@ export function Assistant({ config, dark, onToggleTheme, onSignedOut }: Props) {
     setContactOpen(true);
   }
 
-  const quiet = "h-9 px-3 text-[13px] font-medium text-muted-foreground";
+  const quiet = "size-10 px-0 text-[13px] font-medium text-muted-foreground sm:h-9 sm:w-auto sm:px-3";
+  const starters = config.starters.filter((s) => !config.demos?.some((d) => d.starter === s));
   const refusal = reply.kind === "unknown" || reply.kind === "off_limits" || reply.kind === "limit";
 
   return (
@@ -276,7 +277,16 @@ export function Assistant({ config, dark, onToggleTheme, onSignedOut }: Props) {
               </TabsTrigger>
             </TabsList>
             {tab === "ask" && !seenDemos && (
-              <span aria-hidden="true" className="pointer-events-none flex items-start justify-end gap-1 pr-3 text-primary md:absolute md:top-full md:left-[56%] md:mt-0.5 md:w-[250px] md:justify-start md:pr-0 dark:text-link">
+              <button type="button" onClick={() => setTab("demos")} className="-mt-1 flex w-full items-start justify-end gap-1.5 pr-[16%] text-primary md:hidden dark:text-link">
+                <span className="mt-3.5 -rotate-2 text-right font-['Caveat',cursive] text-[20px] leading-none font-semibold">Come check out the agents I've built</span>
+                <svg viewBox="0 0 60 50" className="h-9 w-11 flex-none -scale-x-100" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M54 44C32 45 13 35 11 8" />
+                  <path d="M3 17l8-10 8 9" />
+                </svg>
+              </button>
+            )}
+            {tab === "ask" && !seenDemos && (
+              <span aria-hidden="true" className="pointer-events-none hidden items-start gap-1 text-primary md:absolute md:top-full md:left-[56%] md:mt-0.5 md:flex md:w-[250px] dark:text-link">
                 <svg viewBox="0 0 60 50" className="h-10 w-12 flex-none" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M54 44C32 45 13 35 11 8" />
                   <path d="M3 17l8-10 8 9" />
@@ -289,11 +299,13 @@ export function Assistant({ config, dark, onToggleTheme, onSignedOut }: Props) {
         <div className={cn("flex justify-end gap-1.5 sm:gap-2", !hasDemos && "md:col-start-3")}>
           {tab === "ask" && (
             <>
-              <Button variant="outline" className={quiet} aria-pressed={!muted} onClick={toggleMuted}>
-                {muted ? "Sound off" : "Sound on"}
+              <Button variant="outline" className={quiet} aria-pressed={!muted} aria-label={muted ? "Sound off" : "Sound on"} onClick={toggleMuted}>
+                {muted ? <VolumeX className="sm:hidden" /> : <Volume2 className="sm:hidden" />}
+                <span className="hidden sm:inline">{muted ? "Sound off" : "Sound on"}</span>
               </Button>
-              <Button variant="outline" className={quiet} aria-pressed={captions} onClick={toggleCaptions}>
-                {captions ? "Captions on" : "Captions off"}
+              <Button variant="outline" className={quiet} aria-pressed={captions} aria-label={captions ? "Captions on" : "Captions off"} onClick={toggleCaptions}>
+                {captions ? <Captions className="sm:hidden" /> : <CaptionsOff className="sm:hidden" />}
+                <span className="hidden sm:inline">{captions ? "Captions on" : "Captions off"}</span>
               </Button>
             </>
           )}
@@ -308,12 +320,12 @@ export function Assistant({ config, dark, onToggleTheme, onSignedOut }: Props) {
       )}
 
       <div hidden={tab !== "ask"}>
-      <main className="mx-auto flex min-h-[calc(100dvh-56px-128px)] max-w-[720px] flex-col items-center justify-center px-4 pt-1 pb-6 text-center sm:px-6 sm:pt-2 sm:pb-8">
+      <main className="mx-auto flex min-h-[calc(100dvh-365px)] max-w-[720px] sm:min-h-[calc(100dvh-56px-128px)] flex-col items-center justify-center px-4 pt-1 pb-6 text-center sm:px-6 sm:pt-2 sm:pb-8">
         <button
           type="button"
           onClick={tapOrb}
           aria-label={started.current ? "The assistant. Tap to speak or to stop the voice." : "The assistant. Tap to start."}
-          className="aspect-square w-[min(64vw,38dvh,320px)] rounded-full outline-offset-[-18px] [-webkit-tap-highlight-color:transparent]"
+          className="aspect-square w-[min(52vw,30dvh,320px)] rounded-full sm:w-[min(64vw,38dvh,320px)] outline-offset-[-18px] [-webkit-tap-highlight-color:transparent]"
         >
           <Orb ref={orb} dark={dark} />
         </button>
@@ -374,8 +386,8 @@ export function Assistant({ config, dark, onToggleTheme, onSignedOut }: Props) {
         <Trace steps={trace} live={live} />
 
         {showStarters && (
-          <div className="mt-6 flex max-w-[640px] flex-wrap justify-center gap-2.5" aria-label="Questions to start with">
-            {config.starters.filter((s) => !config.demos?.some((d) => d.starter === s)).map((starter) => (
+          <div className="mt-6 hidden max-w-[640px] flex-wrap justify-center gap-2.5 sm:flex" aria-label="Questions to start with">
+            {starters.map((starter) => (
               <Button
                 key={starter}
                 variant="outline"
@@ -426,6 +438,15 @@ export function Assistant({ config, dark, onToggleTheme, onSignedOut }: Props) {
       </section>
 
       <footer className="fixed inset-x-0 bottom-0 border-t bg-background/85 px-4 pt-3.5 pb-[calc(12px+env(safe-area-inset-bottom))] backdrop-blur-lg sm:px-6">
+        {showStarters && starters.length > 0 && (
+          <div className="-mx-4 mb-2.5 flex snap-x scroll-px-4 gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:hidden [&::-webkit-scrollbar]:hidden" aria-label="Questions to start with">
+            {starters.map((starter) => (
+              <Button key={starter} variant="outline" className="h-10 flex-none snap-start rounded-full bg-card px-4 text-[14px] font-medium" onClick={() => void send(starter)}>
+                {starter}
+              </Button>
+            ))}
+          </div>
+        )}
         <form
           onSubmit={submit}
           autoComplete="off"
