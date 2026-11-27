@@ -24,6 +24,7 @@ export function settings(env: Env) {
     voice: hasOpenAI(env),
     ttsModel: env.OPENAI_TTS_MODEL || "gpt-4o-mini-tts",
     ttsVoice: env.OPENAI_TTS_VOICE || "cedar",
+    ttsInstructions: (env.OPENAI_TTS_INSTRUCTIONS || "").trim(),
   };
 }
 

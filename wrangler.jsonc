@@ -65,7 +65,9 @@
     "OPENAI_EMBEDDING_MODEL": "text-embedding-3-small",
     "OPENAI_EMBEDDING_PRICE_PER_MTOK": "0.02",
     "OPENAI_TTS_MODEL": "gpt-4o-mini-tts",
-    "OPENAI_TTS_VOICE": "cedar",
+    "OPENAI_TTS_VOICE": "sage",
+    // How the voice should sound. OpenAI's voices have no fixed accent; this line sets it.
+    "OPENAI_TTS_INSTRUCTIONS": "Speak in British English with a natural southern English accent. Calm, clear and friendly, at a conversational pace.",
     "DAILY_VOICE_CHARS": "20000"
   },
   "observability": { "enabled": true }

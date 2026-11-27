@@ -29,7 +29,7 @@ export async function speak(env: Env, deps: Deps, session: Session, id: string):
     return new Response("Voice budget used for today", { status: 429 });
   }
 
-  const res = await openai(env, deps, "/audio/speech", { model: cfg.ttsModel, voice: cfg.ttsVoice, input: text, response_format: "mp3" });
+  const res = await openai(env, deps, "/audio/speech", { model: cfg.ttsModel, voice: cfg.ttsVoice, input: text, response_format: "mp3", ...(cfg.ttsInstructions ? { instructions: cfg.ttsInstructions } : {}) });
   if (!res.ok || !res.body) {
     // The provider's own reason is logged for the owner. The visitor's page falls back to the browser's voice.
     const reason = (await res.text().catch(() => "")).replace(/\s+/g, " ").slice(0, 200);

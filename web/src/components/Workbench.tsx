@@ -256,10 +256,10 @@ function Answer({ answer }: { answer: DataAnswer }) {
   return (
     <>
       <Rise>
-        <p className="text-base leading-relaxed">{answer.answer}</p>
+        <p className="text-base leading-relaxed break-words">{answer.answer}</p>
       </Rise>
       {answer.ok && answer.columns && answer.rows && (
-        <Rise className="rounded-lg border">
+        <Rise className="overflow-x-auto rounded-lg border">
           <Table>
             <TableHeader>
               <TableRow>
@@ -293,7 +293,7 @@ function Answer({ answer }: { answer: DataAnswer }) {
                 <CodeBlockCopyButton value={answer.sql} />
               </CodeBlockActions>
             </CodeBlockHeader>
-            <CodeBlockContent>{answer.sql}</CodeBlockContent>
+            <CodeBlockContent wrap>{answer.sql}</CodeBlockContent>
           </CodeBlock>
         </Rise>
       )}
@@ -596,7 +596,7 @@ function AgentView({ agent, index, onBack }: { agent: Agent; index: number; onBa
             <CardTitle>{title}</CardTitle>
             <CardDescription>{hint}</CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-5">
+          <CardContent className="grid grid-cols-1 gap-5 [&>*]:min-w-0">
             {error && (
               <Alert variant="destructive">
                 <Ban />

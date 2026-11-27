@@ -96,6 +96,8 @@ export interface Env {
   OPENAI_EMBEDDING_PRICE_PER_MTOK?: string;
   OPENAI_TTS_MODEL?: string;
   OPENAI_TTS_VOICE?: string;
+  /** Optional. Steers accent and tone on models that accept it, such as gpt-4o-mini-tts. */
+  OPENAI_TTS_INSTRUCTIONS?: string;
   DAILY_VOICE_CHARS?: string;
 }
 

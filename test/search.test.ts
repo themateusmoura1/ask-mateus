@@ -93,6 +93,14 @@ describe("the OpenAI voice", () => {
     expect(call.headers.authorization).toBe("Bearer test-openai-key");
   });
 
+  it("passes the accent and tone line to the voice when one is set", async () => {
+    const w = world({ env: { ...OPENAI, OPENAI_TTS_VOICE: "sage", OPENAI_TTS_INSTRUCTIONS: " Speak in British English. " } });
+    const { reply } = await w.ask("How does the returns agent work?");
+    await w.send(`/api/speak/${reply.speak}`);
+    const call = w.calls.find((c) => c.url.endsWith("/v1/audio/speech"))!;
+    expect(call.body).toMatchObject({ voice: "sage", instructions: "Speak in British English." });
+  });
+
   it("never writes the OpenAI key to storage or to the page", async () => {
     const w = world({ env: { ...LIVE, ...OPENAI } });
     const { reply } = await w.ask("How does the returns agent work?");

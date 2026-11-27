@@ -64,6 +64,21 @@ export function Assistant({ config, dark, onToggleTheme, onSignedOut }: Props) {
   const [trace, setTrace] = useState<TraceStep[]>([]);
   const [request, setRequest] = useState<{ id: string; state: RequestState } | null>(null);
   const [demo, setDemo] = useState("");
+  // True while the question box has focus. On a phone the keyboard takes half the
+  // screen, so everything that isn't the assistant or the box steps aside.
+  const [typing, setTyping] = useState(false);
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const focusBox = (on: boolean) => {
+    clearTimeout(typingTimer.current);
+    if (on) {
+      setTyping(true);
+      // Keep the assistant in view: without this the browser scrolls down to the box.
+      for (const wait of [0, 250, 500]) setTimeout(() => window.scrollTo({ top: 0 }), wait);
+    } else {
+      // A short wait, so a tap on Send lands before the layout changes back.
+      typingTimer.current = setTimeout(() => setTyping(false), 200);
+    }
+  };
   const hasDemos = (config.demos?.length ?? 0) > 0;
   const [tab, setTabState] = useState<"ask" | "demos">(() => (hasDemos && location.hash === "#demos" ? "demos" : "ask"));
   const [seenDemos, setSeenDemos] = useState(tab === "demos");
@@ -276,7 +291,7 @@ export function Assistant({ config, dark, onToggleTheme, onSignedOut }: Props) {
               </TabsTrigger>
             </TabsList>
             {tab === "ask" && !seenDemos && (
-              <button type="button" onClick={() => setTab("demos")} className="-mt-1 flex w-full items-start justify-end gap-1.5 pr-[16%] text-primary md:hidden dark:text-link">
+              <button type="button" onClick={() => setTab("demos")} className={cn("-mt-1 flex w-full items-start justify-end gap-1.5 pr-[16%] text-primary md:hidden dark:text-link", typing && "hidden")}>
                 <span className="mt-3.5 -rotate-2 text-right font-['Caveat',cursive] text-[20px] leading-none font-semibold">Come check out the agents I've built</span>
                 <svg viewBox="0 0 60 50" className="h-9 w-11 flex-none -scale-x-100" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M54 44C32 45 13 35 11 8" />
@@ -319,12 +334,12 @@ export function Assistant({ config, dark, onToggleTheme, onSignedOut }: Props) {
       )}
 
       <div hidden={tab !== "ask"}>
-      <main className="mx-auto flex min-h-[calc(100dvh-365px)] max-w-[720px] sm:min-h-[calc(100dvh-56px-128px)] flex-col items-center justify-center px-4 pt-1 pb-6 text-center sm:px-6 sm:pt-2 sm:pb-8">
+      <main className={cn("mx-auto flex max-w-[720px] flex-col items-center justify-center px-4 pt-1 pb-6 text-center sm:min-h-[calc(100dvh-56px-128px)] sm:px-6 sm:pt-2 sm:pb-8", typing ? "max-sm:min-h-0 max-sm:justify-start max-sm:pb-24" : "max-sm:min-h-[calc(100dvh-365px)]")}>
         <button
           type="button"
           onClick={tapOrb}
           aria-label={started.current ? "The assistant. Tap to speak or to stop the voice." : "The assistant. Tap to start."}
-          className="aspect-square w-[min(52vw,30dvh,320px)] rounded-full sm:w-[min(64vw,38dvh,320px)] outline-offset-[-18px] [-webkit-tap-highlight-color:transparent]"
+          className="aspect-square w-[min(52vw,26dvh,320px)] rounded-full sm:w-[min(64vw,38dvh,320px)] outline-offset-[-18px] [-webkit-tap-highlight-color:transparent]"
         >
           <Orb ref={orb} dark={dark} />
         </button>
@@ -403,7 +418,7 @@ export function Assistant({ config, dark, onToggleTheme, onSignedOut }: Props) {
 
       </main>
 
-      <section id="how" aria-labelledby="how-title" className="mx-auto max-w-[720px] border-t px-4 pt-14 pb-[184px] sm:px-6">
+      <section id="how" aria-labelledby="how-title" className={cn("mx-auto max-w-[720px] border-t px-4 pt-14 pb-[184px] sm:px-6", typing && "max-sm:hidden")}>
         <h2 id="how-title" className="mb-7 text-[clamp(28px,4vw,40px)] leading-[1.05]">
           How this assistant works
         </h2>
@@ -437,7 +452,7 @@ export function Assistant({ config, dark, onToggleTheme, onSignedOut }: Props) {
       </section>
 
       <footer className="fixed inset-x-0 bottom-0 border-t bg-background/85 px-4 pt-3.5 pb-[calc(12px+env(safe-area-inset-bottom))] backdrop-blur-lg sm:px-6">
-        {showStarters && starters.length > 0 && (
+        {showStarters && starters.length > 0 && !typing && (
           <div className="-mx-4 mb-2.5 flex snap-x scroll-px-4 gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:hidden [&::-webkit-scrollbar]:hidden" aria-label="Questions to start with">
             {starters.map((starter) => (
               <Button key={starter} variant="outline" className="h-10 flex-none snap-start rounded-full bg-card px-4 text-[14px] font-medium" onClick={() => void send(starter)}>
@@ -462,6 +477,8 @@ export function Assistant({ config, dark, onToggleTheme, onSignedOut }: Props) {
           <Input
             id="question"
             value={draft}
+            onFocus={() => focusBox(true)}
+            onBlur={() => focusBox(false)}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Ask about the work"
             maxLength={config.maxMessageChars}
@@ -472,7 +489,7 @@ export function Assistant({ config, dark, onToggleTheme, onSignedOut }: Props) {
             <ArrowRight className="size-5" />
           </Button>
         </form>
-        <div className="mx-auto mt-1.5 flex min-h-10 max-w-[672px] items-center justify-between gap-3">
+        <div className={cn("mx-auto mt-1.5 flex min-h-10 max-w-[672px] items-center justify-between gap-3", typing && "max-sm:hidden")}>
           <button type="button" onClick={openContact} className="py-3 font-heading text-[14.5px] leading-tight font-semibold underline decoration-1 underline-offset-[5px] hover:text-link">
             Talk to the real {config.firstName}
           </button>
