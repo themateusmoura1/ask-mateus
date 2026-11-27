@@ -39,7 +39,6 @@ const HOW = (name: string, days: number) => [
   "Every answer links its source. A check in code, separate from the model, drops any answer that has none.",
   `If the notes don't cover your question it says so, and offers a way to ask ${name} directly.`,
   `It can't send, book or promise anything. A request to talk waits until ${name} approves it.`,
-  "It has a message limit per visitor and a daily spending cap. It refuses salary, family, health, other people, and requests to print its notes or instructions.",
   `Conversations are logged and ${name} can read them. Logs are deleted after ${days} days.`,
 ];
 

@@ -9,7 +9,6 @@ import { createHash } from "node:crypto";
 import { pathToFileURL } from "node:url";
 
 export const BANNED_HASHES = new Set([
-  "c043da3d7ebc59f7a015bbf0c7178c8bf917892eff31c4b7a9ec1beb41ea2c12",
   "a0109aec66f8ad23b567ded2dfcfba794088ab55674db5a7436a955504432ded",
 ]);
 
@@ -17,7 +16,7 @@ export const BANNED_HASHES = new Set([
  * Names that are fine in the private notes but must not appear in the repo,
  * for example a company a private demo variant was written for.
  */
-export const REPO_ONLY_HASHES = new Set(["3e834ed051928c430d4e70e89413bc6052323e9b8b187990fe5dd3653a98dcac"]);
+export const REPO_ONLY_HASHES = new Set(["c043da3d7ebc59f7a015bbf0c7178c8bf917892eff31c4b7a9ec1beb41ea2c12", "3e834ed051928c430d4e70e89413bc6052323e9b8b187990fe5dd3653a98dcac"]);
 
 export function hashWord(word) {
   return createHash("sha256").update(`banned|${word.trim().toLowerCase()}`).digest("hex");

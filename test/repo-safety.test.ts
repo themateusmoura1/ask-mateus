@@ -87,8 +87,8 @@ describe("names that must stay private", () => {
 
   it("the list in the repo holds hashes only", () => {
     const source = readFileSync(join(root, "scripts", "banned.mjs"), "utf8");
-    expect(BANNED_HASHES.size).toBeGreaterThanOrEqual(2);
-    for (const hash of BANNED_HASHES) expect(hash).toMatch(/^[0-9a-f]{64}$/);
+    expect(BANNED_HASHES.size + REPO_ONLY_HASHES.size).toBeGreaterThanOrEqual(3);
+    for (const hash of [...BANNED_HASHES, ...REPO_ONLY_HASHES]) expect(hash).toMatch(/^[0-9a-f]{64}$/);
     expect(countBanned(source)).toBe(0);
   });
 
