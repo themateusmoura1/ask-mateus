@@ -49,7 +49,7 @@ export function summariseForVisitors(events: Logged[], env: Env, deps: Deps): st
         if (e.outcome === "refused") day.refused++;
       }
     } else if (e.type === "safety") {
-      if (e.what === "injection" || e.what === "dump" || e.what === "leak_blocked") {
+      if (e.what === "injection" || e.what === "dump" || e.what === "private" || e.what === "gateway_guardrail" || e.what === "leak_blocked") {
         count.blocked++;
         if (isToday) day.blocked++;
       } else {

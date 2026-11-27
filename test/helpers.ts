@@ -91,6 +91,7 @@ export function world(options: Options = {}) {
       calls.push({ url, body, headers: Object.fromEntries(new Headers(init?.headers).entries()) });
       if (url.endsWith("/v1/messages?beta=true") || url.endsWith("/v1/messages")) {
         const said = options.modelSays?.(body) ?? { kind: "unknown", answer: "", sources: [] };
+        if (said instanceof Response) return said;
         return Response.json({
           id: "msg_test",
           type: "message",

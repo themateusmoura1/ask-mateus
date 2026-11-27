@@ -125,6 +125,20 @@ const REWRITE_SCHEMA = {
   additionalProperties: false,
 } as const;
 
+/**
+ * Cloudflare AI Gateway can run its own guardrails on every call: a prompt
+ * injection check and content categories, set on the gateway itself. When one
+ * of them stops a call, the gateway answers 424 with code 2016 (the question)
+ * or 2017 (the reply) and the model's words never arrive.
+ */
+export function gatewayBlocked(error: unknown): "question" | "reply" | null {
+  if (!(error instanceof Anthropic.APIError)) return null;
+  const text = `${error.message} ${JSON.stringify(error.error ?? "")}`;
+  if (/\b2017\b/.test(text) || /response blocked due to security/i.test(text)) return "reply";
+  if (/\b2016\b/.test(text) || /prompt blocked due to security/i.test(text)) return "question";
+  return null;
+}
+
 // ------------------------------------------------------------------ attacks
 
 const INJECTION =
@@ -132,14 +146,19 @@ const INJECTION =
 const DUMP =
   /\b(print|show|reveal|dump|list|output|repeat|give me|display|export|enumerate|recite|leak|translate|summari[sz]e)\b.{0,60}\b(system prompt|prompt|instructions|rules|knowledge base|knowledge files?|all (of )?(your|the) (notes|files|sources|knowledge|documents)|your (notes|files|sources|documents|context|configuration)|everything (above|you know|you were told)|(text|words) above)\b|\bwhat (are|is) your (system prompt|instructions|rules)\b/i;
 
+// Someone's financial or identity details. Never in the notes, so never worth a model call.
+const PRIVATE =
+  /\bcred\w* ?cards?\b|\b(debit|bank) ?cards?\b|\bcard (number|details)\b|\bcvv\b|\bbank (account|details|login)\b|\biban\b|\bssn\b|\b(social security|national insurance|passport|tax|id card|driving licen[cs]e) ?(number|no\b)|\b(his|her|their|\w+'s) (password|passcode|pin|home address|phone number|date of birth)\b/i;
+
 /**
  * Obvious attempts are refused before the model is called. It costs nothing,
  * it is the same every time, and it gives the log a clear safety event.
  * The model's own rules and the checks in guard.ts catch the less obvious ones.
  */
-export function detectAttack(question: string): "injection" | "dump" | null {
+export function detectAttack(question: string): "injection" | "dump" | "private" | null {
   if (DUMP.test(question)) return "dump";
   if (INJECTION.test(question)) return "injection";
+  if (PRIVATE.test(question)) return "private";
   return null;
 }
 

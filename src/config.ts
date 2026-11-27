@@ -48,7 +48,7 @@ export function fixed(site: Site) {
       `I can't help with that here. Try me on ${name}'s projects, agents or career.`,
       `I keep to ${name}'s work, so I'll leave that alone. What would you like to know about the work?`,
     ],
-    contact: `I can't book or promise anything myself. Leave your name, email and reason, and ${name} will reply by email.`,
+    contact: `To reach ${name}, leave your name, email and reason below and you'll get a reply by email. I can't book or promise anything myself.`,
     visitorLimit: `That's the message limit for today. It resets tomorrow, or you can reach ${name} with "Talk to the real ${name}".`,
     budgetLimit: `I've used up today's budget, so I'm off until tomorrow. You can still leave ${name} a request below.`,
     tooLong: "That's too long for me. Can you ask it in a sentence or two?",

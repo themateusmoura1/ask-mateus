@@ -13,7 +13,7 @@ import { budgetLeft, costMicroUsd, keys, recordSpend, takeOne, today, visitorId 
 import { decideIntake, describeFlow, runFlow } from "./flow-demo";
 import { connect, emit, SessionRoom, type TraceStep } from "./live";
 import { logEvent, readLogs, summarise } from "./log";
-import { askClaude, askStub, detectAttack, rewriteClaude } from "./model";
+import { askClaude, askStub, detectAttack, gatewayBlocked, rewriteClaude } from "./model";
 import { searchNotes } from "./search";
 import { activeStack } from "./stack";
 import { liveNote, wantsStats } from "./stats";
@@ -155,13 +155,17 @@ async function chat(request: Request, env: Env, deps: Deps, bundle: Bundle, sess
     await logEvent(env, deps, { type: "safety", what: attack, ...who, question });
     await step(
       "filter",
-      "Injection filter",
+      "Input filter",
       "blocked",
-      attack === "dump" ? "Asked for the notes or instructions. Refused in code, model not called." : "Tried to change the rules. Refused in code, model not called.",
+      attack === "dump"
+        ? "Asked for the notes or instructions. Refused in code, model not called."
+        : attack === "private"
+          ? "Asked for someone's financial or identity details. Refused in code, model not called."
+          : "Tried to change the rules. Refused in code, model not called.",
     );
     reply = enforce(JSON.stringify({ kind: "off_limits", answer: "", sources: [] }), bundle).reply;
   } else {
-    await step("filter", "Injection filter", "ok", "Nothing suspicious in the question");
+    await step("filter", "Input filter", "ok", "No attempt to change the rules, get the notes or get private details. Topics are judged at the answer check.");
 
     // "Show me the agents working" opens a demo. The words are the owner's, fixed
     // in the notes, so the model is not needed and nothing can be invented.
@@ -232,6 +236,13 @@ async function chat(request: Request, env: Env, deps: Deps, bundle: Bundle, sess
         const seconds = ((deps.now().getTime() - called) / 1000).toFixed(1);
         await step("model", "Model", raw === null ? "blocked" : "ok", raw === null ? "The model declined to answer" : `${cfg.model} answered${route} in ${seconds}s: ${usage.inputTokens} tokens in, ${usage.outputTokens} out`);
       } catch (error) {
+        const stopped = gatewayBlocked(error);
+        if (stopped) {
+          // The gateway's own guardrails refused the call. That is a refusal, not a fault.
+          await logEvent(env, deps, { type: "safety", what: "gateway_guardrail", ...who, question });
+          await step("model", "Model", "blocked", `Cloudflare AI Gateway guardrails blocked the ${stopped}. No model answer was used.`);
+          raw = null;
+        } else {
         let message = "Model call failed";
         if (error instanceof Anthropic.AuthenticationError) message = "Anthropic rejected the API key";
         else if (error instanceof Anthropic.RateLimitError) message = "Anthropic rate limit reached";
@@ -240,6 +251,7 @@ async function chat(request: Request, env: Env, deps: Deps, bundle: Bundle, sess
         await logEvent(env, deps, { type: "error", where: "chat", message });
         await step("model", "Model", "blocked", "The model call failed");
         return stop(words.broken, 503);
+        }
       }
     }
 

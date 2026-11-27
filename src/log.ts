@@ -25,7 +25,7 @@ export type LogEvent =
     }
   | {
       type: "safety";
-      what: "injection" | "dump" | "leak_blocked" | "visitor_limit" | "spend_cap" | "wrong_code_limit" | "voice_cap";
+      what: "injection" | "dump" | "private" | "gateway_guardrail" | "leak_blocked" | "visitor_limit" | "spend_cap" | "wrong_code_limit" | "voice_cap";
       sid?: string;
       label?: string;
       question?: string;
