@@ -1,6 +1,7 @@
 {
   "_todo": "A made-up demo for the made-up person. Copy this shape for your own.",
   "id": "returns",
+  "order": 70,
   "title": "The returns agent",
   "starter": "Show me the returns agent working",
   "triggers": [

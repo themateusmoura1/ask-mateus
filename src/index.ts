@@ -11,6 +11,7 @@ import { safeRewrite, tells, tidy } from "./humanize";
 import { loadBundle } from "./kb";
 import { budgetLeft, costMicroUsd, keys, recordSpend, takeOne, today, visitorId } from "./limits";
 import { decideIntake, describeFlow, runFlow } from "./flow-demo";
+import { decideInvoices, hasInvoiceList } from "./office-demo";
 import { connect, emit, SessionRoom, type TraceStep } from "./live";
 import { logEvent, readLogs, summarise } from "./log";
 import { askClaude, askStub, detectAttack, gatewayBlocked, rewriteClaude } from "./model";
@@ -413,12 +414,13 @@ async function demoRoute(request: Request, env: Env, deps: Deps, bundle: Bundle,
       await logEvent(env, deps, { type: "demo", ...who, case: scenarioId, action: "run", result: `${found.flow}, $${(done.spentMicroUsd / 1_000_000).toFixed(4)}` });
       return json({ scenario: done.scenario, blocks: done.blocks, needsDecision: done.needsDecision, draft: done.draft, trace });
     }
-    if (action === "decide" && found.flow === "intake") {
+    if (action === "decide" && (found.flow === "intake" || found.flow === "invoices")) {
       const scenario = found.scenarios.find((s) => s.id === scenarioId);
       const decision = body?.decision === "approve" || body?.decision === "reject" ? body.decision : null;
       const draft = body?.draft as { subject: string; body: string };
       if (!scenario || !decision || !draft || typeof draft.body !== "string") return json({ error: "Send the decision and the draft." }, 400);
-      const record = await decideIntake(found, scenario, decision, draft, rec, deps.now());
+      if (found.flow === "invoices" && !hasInvoiceList(found, scenario)) return json({ error: "There is nothing to approve this evening." }, 400);
+      const record = found.flow === "invoices" ? await decideInvoices(found, decision, draft, rec, deps.now()) : await decideIntake(found, scenario, decision, draft, rec, deps.now());
       await logEvent(env, deps, { type: "demo", ...who, case: scenarioId, action: "decide", result: `${decision} ${record.id}` });
       return json({ record, trace });
     }

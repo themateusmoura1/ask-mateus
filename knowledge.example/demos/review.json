@@ -5,7 +5,11 @@
   "order": 60,
   "title": "Builder and reviewer",
   "starter": "Show me the builder and the reviewer",
-  "triggers": ["builder and the reviewer", "builder and reviewer demo", "reviewer demo"],
+  "triggers": [
+    "builder and the reviewer",
+    "builder and reviewer demo",
+    "reviewer demo"
+  ],
   "intro": "Two agents. One builds a small piece of work. A separate one reviews it against a fixed list, knowing nothing about how it was made, and sends corrections back. The work is done only when the review passes.",
   "disclaimer": "A working re-creation. The tasks are made up.",
   "source": "returns-agent",
@@ -14,7 +18,13 @@
   "company": "a made-up app",
   "builder": "Builder",
   "reviewer": "Reviewer",
-  "checklist": ["At most 25 words", "No exclamation marks, and no 'please' or 'sorry'", "Says what the person should do next", "Does not blame the person", "No technical codes or jargon"],
+  "checklist": [
+    "At most 25 words",
+    "No exclamation marks, and no 'please' or 'sorry'",
+    "Says what the person should do next",
+    "Does not blame the person",
+    "No technical codes or jargon"
+  ],
   "scenarios": [
     {
       "id": "t-upload",
@@ -23,11 +33,26 @@
       "prepared": {
         "first": "Upload failed! Error 413: payload too large. The file exceeds the maximum size allowed.",
         "verdict": [
-          { "pass": true, "note": "" },
-          { "pass": false, "note": "Remove the exclamation mark." },
-          { "pass": false, "note": "Say what to do next: choose a smaller photo." },
-          { "pass": true, "note": "" },
-          { "pass": false, "note": "Remove 'Error 413' and 'payload'." }
+          {
+            "pass": true,
+            "note": ""
+          },
+          {
+            "pass": false,
+            "note": "Remove the exclamation mark."
+          },
+          {
+            "pass": false,
+            "note": "Say what to do next: choose a smaller photo."
+          },
+          {
+            "pass": true,
+            "note": ""
+          },
+          {
+            "pass": false,
+            "note": "Remove 'Error 413' and 'payload'."
+          }
         ],
         "fixed": "This photo is over the 10 MB limit. Choose a smaller photo, or reduce its size, and try again."
       }
@@ -39,11 +64,26 @@
       "prepared": {
         "first": "You have no tasks. You haven't added anything to your list.",
         "verdict": [
-          { "pass": true, "note": "" },
-          { "pass": true, "note": "" },
-          { "pass": false, "note": "Say how to add the first task." },
-          { "pass": false, "note": "'You haven't added anything' reads as blame." },
-          { "pass": true, "note": "" }
+          {
+            "pass": true,
+            "note": ""
+          },
+          {
+            "pass": true,
+            "note": ""
+          },
+          {
+            "pass": false,
+            "note": "Say how to add the first task."
+          },
+          {
+            "pass": false,
+            "note": "'You haven't added anything' reads as blame."
+          },
+          {
+            "pass": true,
+            "note": ""
+          }
         ],
         "fixed": "Nothing here yet. Tap the plus button to add your first task."
       }

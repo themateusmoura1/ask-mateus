@@ -20,7 +20,7 @@ describe("the page can list the agents", () => {
     const w = world();
     await w.login();
     const config = (await (await w.send("/api/config")).json()) as any;
-    expect(config.demos.map((d: any) => d.id)).toEqual(["returns", "intake", "desk", "data", "support", "review"]);
+    expect(config.demos.map((d: any) => d.id)).toEqual(["desk", "intake", "invoices", "triage", "data", "support", "review", "returns"]);
   });
 
   it("describes an agent without giving away prepared answers", async () => {
@@ -43,7 +43,7 @@ describe("the page can list the agents", () => {
 describe("every block arrives with the step it belongs to", () => {
   it("never places a block after the end of the trace", async () => {
     const w = world();
-    for (const [demo, scenario] of [["desk", "q-delivery"], ["desk", "t-invoice"], ["support", "q-refund"], ["intake", "e-complete"], ["review", "t-upload"]]) {
+    for (const [demo, scenario] of [["desk", "q-delivery"], ["desk", "t-invoice"], ["support", "q-refund"], ["intake", "e-complete"], ["review", "t-upload"], ["invoices", "t-evening"], ["invoices", "t-quiet"], ["triage", "w-friday"], ["triage", "w-quiet"]]) {
       const { data } = await run(w, demo, scenario);
       expect(data.blocks.length).toBeGreaterThan(1);
       for (const block of data.blocks) expect(block.after).toBeLessThanOrEqual(data.trace.length);

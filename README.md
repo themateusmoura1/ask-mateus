@@ -82,6 +82,7 @@ Each demo is a JSON file in `knowledge/demos/` (made-up ones in `knowledge.examp
 
 - `src/demo.ts` is a scored pipeline. One agent scores a case against a rubric, counting only cited points and capping each criterion, then hands it to a second agent that drafts a reply. In the example these are a Checker and a Writer handling book returns.
 - `src/flow-demo.ts` runs four flows: a company assistant that hands a task to a colleague's agent, a client agent that stops for your Approve or Reject, a support agent that hands over to a person when no article fits, and a builder with a separate reviewer.
+- `src/office-demo.ts` runs two personal assistants for people who aren't technical. The invoice assistant lists the day's invoices each evening and sends them to the accountant only after the owner says yes: the recipient is fixed in code, the approval covers the exact list, and an invoice that was listed but not sent can't drop out. The restaurant assistant reads a work phone it can never send on, sorts what came in by urgency in code and drafts replies for the owner to copy.
 - `src/data-demo.ts` is a data agent. The model turns a question into a fixed query description, and code checks and runs it, then writes the answer and the SQL, so the model never writes a number.
 
 The model only proposes and code decides what is shown. With no key, the demos use prepared results or a word matcher. In the pipeline the score also picks the model (`src/demo-model.ts`): 70 and up goes to the strong one unless the path names a tier. Both models are settings in `wrangler.jsonc`, and their calls count against the same daily spend cap as the assistant. A model draft with an address or a link is discarded, and the recipient always comes from the file.
@@ -224,7 +225,7 @@ Treat every note as public: a visitor with a code can get the assistant to repea
 
 ## Tests
 
-`npm test` runs about 225 Vitest tests in `test/`, with the network, the clock and KV faked (`test/helpers.ts`). They cover the gate and sessions, personal links, Cloudflare Access tokens, the harness and the humanizer pass, grounding and leak checks, limits and spend caps, logging and retention, the live trace and Telegram approvals, search, each demo engine, the shape's motion, the stack list, the commit check, the knowledge lint and the account pin. One test runs only when a private `knowledge/demos/` folder exists.
+`npm test` runs about 225 Vitest tests in `test/`, with the network, the clock and KV faked (`test/helpers.ts`). They cover the gate and sessions, personal links, Cloudflare Access tokens, the harness and the humanizer pass, grounding and leak checks, limits and spend caps, logging and retention, the live trace and Telegram approvals, search, each demo engine, the two personal assistants, the shape's motion, the stack list, the commit check, the knowledge lint and the account pin. One test runs only when a private `knowledge/demos/` folder exists.
 
 ## Limitations
 

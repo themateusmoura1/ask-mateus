@@ -1,5 +1,6 @@
 import { callJson, type Route } from "./demo-model";
 import type { TraceStep } from "./live";
+import { runInvoices, runTriage, type InboxEmail, type PendingInvoice, type PhoneMessage } from "./office-demo";
 import type { Deps, Env } from "./types";
 
 /**
@@ -7,7 +8,7 @@ import type { Deps, Env } from "./types";
  * picks nothing but which made-up input to watch. Everything the agent reads
  * is made up and lives in the demo's own file.
  *
- * Four kinds share this file:
+ * Four kinds live in this file, and two more in office-demo.ts ("invoices" and "triage"):
  *  - "desk": a company assistant answers from company pages, or hands a task
  *    to a colleague's personal agent.
  *  - "support": a support agent answers from help articles, or hands over to
@@ -29,7 +30,16 @@ export interface FlowScenario {
   text?: string;
   email?: { from: string; subject: string; body: string };
   brief?: string;
+  /** invoices and triage: when this run happens, shown in the trace. */
+  time?: string;
+  /** invoices: what arrived today, and what was listed before but not yet sent. */
+  inbox?: InboxEmail[];
+  pending?: PendingInvoice[];
+  /** triage: what came in on the work phone. */
+  messages?: PhoneMessage[];
   prepared: {
+    /** invoices and triage: what the model would return, one item per email or message. */
+    items?: unknown[];
     page?: string | null;
     answer?: string;
     title?: string;
@@ -44,7 +54,7 @@ export interface FlowScenario {
 
 export interface FlowDemo {
   type: "flow";
-  flow: "desk" | "support" | "intake" | "review";
+  flow: "desk" | "support" | "intake" | "review" | "invoices" | "triage";
   id: string;
   title: string;
   starter: string;
@@ -68,6 +78,13 @@ export interface FlowDemo {
   checklist?: string[];
   builder?: string;
   reviewer?: string;
+  /** invoices and triage: the person the assistant works for, and where it talks to them. */
+  owner?: { name: string; channel: string };
+  /** invoices: who a document must be billed to, and the one place it may be sent. */
+  businesses?: string[];
+  recipient?: { label: string; address: string };
+  /** triage: what the read-only number is called. */
+  line?: string;
 }
 
 export type Block = { after: number } & (
@@ -79,7 +96,7 @@ export type Block = { after: number } & (
   | { type: "output"; label: string; text: string }
   | { type: "checklist"; label: string; items: { label: string; pass: boolean; note: string }[] }
   | { type: "note"; tone: "info" | "stop" | "ok"; title: string; text: string }
-  | { type: "approval" }
+  | { type: "approval"; approve?: string; reject?: string; approved?: string; rejected?: string }
 );
 
 /** What a visitor may see before running anything. */
@@ -105,7 +122,7 @@ export interface Recorder {
   count(): number;
 }
 
-interface Out {
+export interface Out {
   blocks: Block[];
   spentMicroUsd: number;
   /** True when a person's decision is the next thing. */
@@ -113,10 +130,10 @@ interface Out {
   draft?: { subject: string; body: string };
 }
 
-const QUIET = /@|https?:\/\/|www\./i;
-const short = (value: unknown, max: number) => (typeof value === "string" ? value.trim().slice(0, max) : "");
+export const QUIET = /@|https?:\/\/|www\./i;
+export const short = (value: unknown, max: number) => (typeof value === "string" ? value.trim().slice(0, max) : "");
 
-function tracker(rec: Recorder) {
+export function tracker(rec: Recorder) {
   const out: Out = { blocks: [], spentMicroUsd: 0, needsDecision: false };
   const block = (b: Block extends infer T ? (T extends { after: number } ? Omit<T, "after"> : never) : never) => out.blocks.push({ ...b, after: rec.count() } as Block);
   const model = (route: Route, what: string) => {
@@ -404,6 +421,7 @@ async function runReview(env: Env, deps: Deps, demo: FlowDemo, scenario: FlowSce
 export async function runFlow(env: Env, deps: Deps, demo: FlowDemo, scenarioId: string, rec: Recorder): Promise<(Out & { scenario: { id: string; label: string } }) | null> {
   const scenario = demo.scenarios.find((s) => s.id === scenarioId) ?? null;
   if (!scenario) return null;
-  const run = demo.flow === "desk" ? runDesk : demo.flow === "support" ? runSupport : demo.flow === "intake" ? runIntake : runReview;
+  const runners = { desk: runDesk, support: runSupport, intake: runIntake, review: runReview, invoices: runInvoices, triage: runTriage };
+  const run = runners[demo.flow];
   return { ...(await run(env, deps, demo, scenario, rec)), scenario: { id: scenario.id, label: scenario.label } };
 }

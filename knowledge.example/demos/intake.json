@@ -5,20 +5,42 @@
   "order": 20,
   "title": "A client agent, with the approval gate",
   "starter": "Show me a client agent with the approval gate",
-  "triggers": ["client agent with the approval", "approval gate demo", "client agent demo"],
+  "triggers": [
+    "client agent with the approval",
+    "approval gate demo",
+    "client agent demo"
+  ],
   "intro": "This is how an agent works for a client. An email arrives, the agent pulls out the details, records them with the client's own tool and drafts a reply. Then it stops, and only a person's approval sends anything.",
   "disclaimer": "A working re-creation. Oficina Norte (made up), the senders and the emails are all made up, and nothing is sent.",
   "source": "returns-agent",
   "agentName": "Client agent",
   "role": "Reads an incoming email, records the job with the client's own tool, drafts a reply and waits for a person to approve it.",
   "company": "Oficina Norte (made up)",
-  "tool": { "name": "jobs register", "workspace": "The workspace of Oficina Norte (made up)" },
+  "tool": {
+    "name": "jobs register",
+    "workspace": "The workspace of Oficina Norte (made up)"
+  },
   "fields": [
-    { "id": "customer", "label": "Customer" },
-    { "id": "request", "label": "What they want" },
-    { "id": "quantity", "label": "Quantity" },
-    { "id": "deadline", "label": "Needed by" },
-    { "id": "site", "label": "Where" }
+    {
+      "id": "customer",
+      "label": "Customer"
+    },
+    {
+      "id": "request",
+      "label": "What they want"
+    },
+    {
+      "id": "quantity",
+      "label": "Quantity"
+    },
+    {
+      "id": "deadline",
+      "label": "Needed by"
+    },
+    {
+      "id": "site",
+      "label": "Where"
+    }
   ],
   "scenarios": [
     {
@@ -30,8 +52,17 @@
         "body": "Good morning,\n\nWe are refurbishing the rooms at Hotel Miradouro (made up) in Braga and need 40 oak bedside tables, 45 cm wide, with one drawer. We would need them delivered by 15 March.\n\nCan you send us a quote?\n\nThank you,\nPurchasing"
       },
       "prepared": {
-        "fields": { "customer": "Hotel Miradouro (made up)", "request": "Oak bedside tables, 45 cm wide, one drawer", "quantity": "40", "deadline": "15 March", "site": "Braga" },
-        "reply": { "subject": "Your request for 40 oak bedside tables", "body": "Good morning,\n\nWe have your request for 40 oak bedside tables, 45 cm wide with one drawer, to be delivered in Braga by 15 March. It is with our team now, and one of them will come back to you with the quote." }
+        "fields": {
+          "customer": "Hotel Miradouro (made up)",
+          "request": "Oak bedside tables, 45 cm wide, one drawer",
+          "quantity": "40",
+          "deadline": "15 March",
+          "site": "Braga"
+        },
+        "reply": {
+          "subject": "Your request for 40 oak bedside tables",
+          "body": "Good morning,\n\nWe have your request for 40 oak bedside tables, 45 cm wide with one drawer, to be delivered in Braga by 15 March. It is with our team now, and one of them will come back to you with the quote."
+        }
       }
     },
     {
@@ -43,8 +74,17 @@
         "body": "Hi,\n\nConstrutora Vale (made up) here. We need interior doors for a block of flats we are finishing in Guimarães. Pine, painted white.\n\nWhat would that cost?"
       },
       "prepared": {
-        "fields": { "customer": "Construtora Vale (made up)", "request": "Interior doors, pine, painted white", "quantity": "not given", "deadline": "not given", "site": "Guimarães" },
-        "reply": { "subject": "Your request for interior doors", "body": "Hi,\n\nWe have your request for pine interior doors, painted white, for the flats in Guimarães. To prepare it we need two things: how many doors, and when you need them. Once we have those, one of our team will come back to you." }
+        "fields": {
+          "customer": "Construtora Vale (made up)",
+          "request": "Interior doors, pine, painted white",
+          "quantity": "not given",
+          "deadline": "not given",
+          "site": "Guimarães"
+        },
+        "reply": {
+          "subject": "Your request for interior doors",
+          "body": "Hi,\n\nWe have your request for pine interior doors, painted white, for the flats in Guimarães. To prepare it we need two things: how many doors, and when you need them. Once we have those, one of our team will come back to you."
+        }
       }
     }
   ]

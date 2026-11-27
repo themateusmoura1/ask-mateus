@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowLeft, ArrowRight, Ban, BarChart3, Check, ChevronRight, ClipboardCheck, Hand, Hourglass, Inbox, LifeBuoy, RotateCw, Search, Send, SkipForward, Waypoints, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, Ban, BarChart3, Check, ChevronRight, ClipboardCheck, Hand, Hourglass, Inbox, LifeBuoy, ReceiptText, RotateCw, Search, Send, SkipForward, Smartphone, Waypoints, X } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Rise, ScoreRing } from "@/components/motion";
@@ -62,7 +62,7 @@ const LOOKS = [
   "bg-cyan-100 text-cyan-600 dark:bg-cyan-500/20 dark:text-cyan-300",
 ];
 
-const BADGE = { research: Search, outreach: Send, data: BarChart3, desk: Waypoints, support: LifeBuoy, intake: Inbox, review: ClipboardCheck } as const;
+const BADGE = { research: Search, outreach: Send, data: BarChart3, desk: Waypoints, support: LifeBuoy, intake: Inbox, review: ClipboardCheck, invoices: ReceiptText, triage: Smartphone } as const;
 
 /** A small robot face. The colour and the face change with the agent's place in the list. */
 function BotAvatar({ index, kind, size = 56 }: { index: number; kind: Look; size?: number }) {
@@ -104,7 +104,7 @@ function BotAvatar({ index, kind, size = 56 }: { index: number; kind: Look; size
   );
 }
 
-/** Every demo is asked for at once. Seven requests one after another left the shelf empty for a long time. */
+/** Every demo is asked for at once. One request after another left the shelf empty for a long time. */
 async function loadAgents(config: Config): Promise<Agent[]> {
   const perDemo = await Promise.all(
     (config.demos ?? []).map(async (demo): Promise<Agent[]> => {
@@ -128,7 +128,9 @@ async function loadAgents(config: Config): Promise<Agent[]> {
       return found;
     }),
   );
-  return perDemo.flat();
+  const all = perDemo.flat();
+  // The research agent closes the shelf. The agents with more to watch come first.
+  return [...all.filter((a) => a.kind !== "research"), ...all.filter((a) => a.kind === "research")];
 }
 
 // ------------------------------------------------------------------ what a run shows
@@ -355,9 +357,9 @@ function Blocks({ blocks, shown, decision, busy, onDecide }: { blocks: Block[]; 
             return (
               <Rise key={i} className="grid gap-2">
                 <p className="text-sm font-medium">{b.label}</p>
-                <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5 rounded-lg border p-4 text-sm">
+                <dl className="grid grid-cols-1 gap-y-3 rounded-lg border p-4 text-sm sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] sm:gap-x-4 sm:gap-y-1.5">
                   {b.rows.map(([label, value]) => (
-                    <div key={label} className="contents">
+                    <div key={label} className="grid gap-0.5 sm:contents">
                       <dt className="text-muted-foreground">{label}</dt>
                       <dd className={cn("break-words", value === "not given" && "text-muted-foreground italic")}>{value}</dd>
                     </div>
@@ -439,9 +441,9 @@ function Blocks({ blocks, shown, decision, busy, onDecide }: { blocks: Block[]; 
               {decision ? (
                 <Alert>
                   {decision.decision === "approve" ? <Check /> : <Ban />}
-                  <AlertTitle>{decision.decision === "approve" ? "Approved" : "Rejected"}</AlertTitle>
+                  <AlertTitle>{decision.decision === "approve" ? "Approved" : "Not approved"}</AlertTitle>
                   <AlertDescription>
-                    {decision.decision === "approve" ? "Cleared to send. This is a demo, so nothing was sent." : "Nothing is sent. The draft is dropped."} Record {decision.id}.
+                    {decision.decision === "approve" ? (b.approved ?? "Cleared to send. This is a demo, so nothing was sent.") : (b.rejected ?? "Nothing is sent. The draft is dropped.")} Record {decision.id}.
                   </AlertDescription>
                 </Alert>
               ) : (
@@ -449,10 +451,10 @@ function Blocks({ blocks, shown, decision, busy, onDecide }: { blocks: Block[]; 
                   <p className="text-sm text-muted-foreground">The agent has stopped. You are the person it waits for.</p>
                   <div className="flex flex-wrap gap-2">
                     <Button size="lg" disabled={busy} onClick={() => onDecide("approve")}>
-                      <Check aria-hidden="true" /> Approve
+                      <Check aria-hidden="true" /> {b.approve ?? "Approve"}
                     </Button>
                     <Button size="lg" variant="outline" disabled={busy} onClick={() => onDecide("reject")}>
-                      <Ban aria-hidden="true" /> Reject
+                      <Ban aria-hidden="true" /> {b.reject ?? "Reject"}
                     </Button>
                   </div>
                 </>
@@ -541,7 +543,7 @@ function AgentView({ agent, index, onBack }: { agent: Agent; index: number; onBa
   const first = result?.kind === "research" ? result.research : result?.kind === "run" ? result.run : null;
   const title = first ? first.case.name : agent.kind === "data" || agent.kind === "flow" ? input : "Working";
   const hint = first ? first.case.summary : agent.kind === "data" ? "A question the site picked. The data is made up." : agent.kind === "flow" ? "Picked by the site. Everything in it is made up." : "On a made-up company the site picked.";
-  const NEXT = { desk: "Next message", support: "Next question", intake: "Next email", review: "Next task" } as const;
+  const NEXT = { desk: "Next message", support: "Next question", intake: "Next email", review: "Next task", invoices: "Next evening", triage: "Next batch" } as const;
   const next = agent.kind === "outreach" ? "Next lead" : agent.kind === "data" ? "Next question" : agent.kind === "flow" ? NEXT[agent.flow] : "";
 
   const ending = (r: DemoRun) => shown >= trace.length && (r.outcome === "blocked" ? <Blocked run={r} /> : r.draft && <Draft run={r} />);

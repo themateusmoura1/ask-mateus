@@ -238,7 +238,7 @@ export const askData = (id: string, question: string) => demoPost<DataAnswer>(id
 
 // ------------------------------------------------------------------ one agent, one job
 
-export type FlowKind = "desk" | "support" | "intake" | "review";
+export type FlowKind = "desk" | "support" | "intake" | "review" | "invoices" | "triage";
 
 export interface FlowInfo {
   type: "flow";
@@ -262,7 +262,7 @@ export type Block = { after: number } & (
   | { type: "output"; label: string; text: string }
   | { type: "checklist"; label: string; items: { label: string; pass: boolean; note: string }[] }
   | { type: "note"; tone: "info" | "stop" | "ok"; title: string; text: string }
-  | { type: "approval" }
+  | { type: "approval"; approve?: string; reject?: string; approved?: string; rejected?: string }
 );
 
 export interface FlowRun {

@@ -1,6 +1,7 @@
 {
   "type": "data",
   "id": "data",
+  "order": 40,
   "title": "Atlas, the data agent",
   "starter": "Ask Atlas about the sales numbers",
   "triggers": [
