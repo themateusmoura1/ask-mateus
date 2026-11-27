@@ -145,6 +145,10 @@ export interface CodeRecord {
   createdAt: string;
   expiresAt?: string;
   revoked: boolean;
+  /** Set when this code has a personal link. Only the link's hash is stored, as the key it lives under. */
+  linkKey?: string;
+  /** The readable start of the link, for the admin page. The random part is never stored. */
+  linkName?: string;
   uses: number;
   lastUsedAt?: string;
 }

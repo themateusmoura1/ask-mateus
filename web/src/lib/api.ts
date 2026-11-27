@@ -64,6 +64,25 @@ export async function enterCode(code: string): Promise<{ ok: true } | { ok: fals
   }
 }
 
+/**
+ * A personal link looks like /acme-k7x2q9wd3f: a name, then ten random characters.
+ * Returns the part after the slash when the address has that shape.
+ */
+export function personalLink(path = location.pathname): string | null {
+  const slug = path.replace(/^\/+|\/+$/g, "").toLowerCase();
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*-[a-z0-9]{10}$/.test(slug) && slug.length <= 80 ? slug : null;
+}
+
+export async function enterLink(link: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const res = await fetch("/api/gate", { method: "POST", headers: json, body: JSON.stringify({ link }) });
+    if (res.ok) return { ok: true };
+    return { ok: false, error: (await res.json()).error || "That link didn't work. Enter your access code instead." };
+  } catch {
+    return { ok: false, error: "I couldn't reach the server. Try again." };
+  }
+}
+
 /** null means the session ended (revoked code or expired cookie). */
 export async function getConfig(): Promise<Config | null | { error: string }> {
   const res = await fetch("/api/config");

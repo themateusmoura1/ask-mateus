@@ -14,7 +14,7 @@ import "./index.css";
 // The token stays in this tab's memory and is sent as a header.
 
 interface ContactRequest { id: string; createdAt: string; status: string; label: string; name: string; email: string; reason: string; questions: string[]; draftReply: string }
-interface Code { id: string; label: string; note: string; variant?: string; createdAt: string; expiresAt?: string; revoked: boolean; uses: number; lastUsedAt?: string }
+interface Code { id: string; label: string; note: string; variant?: string; createdAt: string; expiresAt?: string; revoked: boolean; uses: number; lastUsedAt?: string; linkName?: string }
 interface Activity {
   days: number;
   retentionDays: number;
@@ -124,6 +124,7 @@ function Codes({ api }: { api: ReturnType<typeof useApi> }) {
   const [codes, setCodes] = useState<Code[]>([]);
   const [variants, setVariants] = useState<string[]>([]);
   const [fresh, setFresh] = useState<{ code: string; label: string } | null>(null);
+  const [freshLink, setFreshLink] = useState<{ link: string; label: string } | null>(null);
   const [error, setError] = useState("");
   const load = useCallback(() => api<{ codes: Code[]; variants?: string[] }>("/api/admin/codes").then((d) => {
         setCodes(d.codes);
@@ -154,6 +155,13 @@ function Codes({ api }: { api: ReturnType<typeof useApi> }) {
           <p className="rounded-lg bg-secondary p-3.5 font-heading text-[22px] font-semibold tracking-wider select-all">{fresh.code}</p>
         </Panel>
       )}
+      {freshLink && (
+        <Panel>
+          <Heading>Personal link for {freshLink.label}. Copy it now: it is not stored and won't be shown again.</Heading>
+          <p className="rounded-lg bg-secondary p-3.5 font-heading text-[17px] font-semibold break-all select-all">{freshLink.link}</p>
+          <Note>Opening it signs the visitor in with this code. Anyone who has the link can use it, so send it only to the person it is for.</Note>
+        </Panel>
+      )}
       <Panel>
         <form onSubmit={create} className="grid items-end gap-4 sm:grid-cols-2">
           <div className="grid gap-2"><Label htmlFor="code-label">Label, used in the greeting</Label><Input id="code-label" name="label" placeholder="Acme" required className={field} /></div>
@@ -178,7 +186,29 @@ function Codes({ api }: { api: ReturnType<typeof useApi> }) {
             <p className="mt-1 text-[13.5px] text-dim">used {c.uses} times · last {when(c.lastUsedAt) || "never"} · created {when(c.createdAt)}{c.expiresAt ? ` · expires ${when(c.expiresAt)}` : ""}</p>
             {c.variant && (<><Heading>Demo variant</Heading><p className="text-muted-foreground">{c.variant}</p></>)}
             {c.note && (<><Heading>Note</Heading><p className="text-muted-foreground">{c.note}</p></>)}
-            {state === "active" && <Button variant="outline" className="mt-4 h-10 px-4" onClick={async () => { await api(`/api/admin/codes/${c.id}/revoke`, {}); await load(); }}>Revoke</Button>}
+            {c.linkName && (<><Heading>Personal link</Heading><p className="text-muted-foreground">Has one, starting /{c.linkName}-. The rest is not stored. Make a new link to replace it.</p></>)}
+            {state === "active" && (
+              <div className="mt-4 flex flex-wrap gap-2.5">
+                <Button
+                  variant="outline"
+                  className="h-10 px-4"
+                  onClick={async () => {
+                    setError("");
+                    try {
+                      const made = await api<{ link: string }>(`/api/admin/codes/${c.id}/link`, {});
+                      setFreshLink({ link: made.link, label: c.label });
+                      window.scrollTo({ top: 0 });
+                      await load();
+                    } catch (e) {
+                      setError((e as Error).message);
+                    }
+                  }}
+                >
+                  {c.linkName ? "Replace personal link" : "Create personal link"}
+                </Button>
+                <Button variant="outline" className="h-10 px-4" onClick={async () => { await api(`/api/admin/codes/${c.id}/revoke`, {}); await load(); }}>Revoke</Button>
+              </div>
+            )}
           </Panel>
         );
       })}

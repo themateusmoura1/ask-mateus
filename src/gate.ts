@@ -62,15 +62,82 @@ export async function listCodes(env: Env): Promise<{ key: string; record: CodeRe
   return all.sort((a, b) => b.record.createdAt.localeCompare(a.record.createdAt));
 }
 
-export async function revokeCode(env: Env, id: string): Promise<CodeRecord | null> {
+/** Finds a code's storage key and record by its short id. */
+async function findCode(env: Env, id: string): Promise<{ key: string; record: CodeRecord } | null> {
   // The pointer first. Codes made before it existed are found by listing.
   const key = (await env.STORE.get(`codeid:${id}`)) ?? (await listCodes(env)).find((c) => c.record.id === id)?.key;
   const raw = key ? await env.STORE.get(key) : null;
-  if (!key || !raw) return null;
-  const record = JSON.parse(raw) as CodeRecord;
+  return key && raw ? { key, record: JSON.parse(raw) as CodeRecord } : null;
+}
+
+export async function revokeCode(env: Env, id: string): Promise<CodeRecord | null> {
+  const found = await findCode(env, id);
+  if (!found) return null;
+  const { key, record } = found;
   record.revoked = true;
+  // A revoked code's link goes with it.
+  if (record.linkKey) await env.STORE.delete(record.linkKey);
+  delete record.linkKey;
+  delete record.linkName;
   await env.STORE.put(key, JSON.stringify(record));
   return record;
+}
+
+// ------------------------------------------------------------------ personal links
+
+/**
+ * A personal link is a second way to enter an existing code: a short address
+ * such as /acme-k7x2q9wd. It gives the same session as typing the code.
+ *
+ * The readable part comes from the code's label. The random part is what
+ * keeps strangers out, so it is made here and never chosen by hand: a link
+ * that is only a company name could be guessed by anyone who knows where the
+ * owner applied. Like a code, the link is stored only as a hash.
+ */
+const LINK_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
+const LINK_RANDOM = 10;
+const LINK_SHAPE = /^[a-z0-9]+(?:-[a-z0-9]+)*-[a-z0-9]{10}$/;
+
+async function hashLink(slug: string): Promise<string> {
+  return hex(await crypto.subtle.digest("SHA-256", encoder.encode(`ask-link|${slug.trim().toLowerCase()}`)));
+}
+
+function linkName(label: string): string {
+  const name = label.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 30).replace(/-+$/, "");
+  return name || "visit";
+}
+
+/** Makes a link for a code, replacing any link it already had. The slug is returned once and stored nowhere. */
+export async function createLink(env: Env, deps: Deps, id: string): Promise<{ slug: string; record: CodeRecord } | null> {
+  const found = await findCode(env, id);
+  if (!found || !usable(found.record, deps)) return null;
+  const { key, record } = found;
+  const bytes = crypto.getRandomValues(new Uint8Array(LINK_RANDOM));
+  const name = linkName(record.label);
+  const slug = `${name}-${[...bytes].map((b) => LINK_ALPHABET[b % LINK_ALPHABET.length]).join("")}`;
+  if (record.linkKey) await env.STORE.delete(record.linkKey);
+  record.linkKey = `link:${await hashLink(slug)}`;
+  record.linkName = name;
+  await env.STORE.put(record.linkKey, key);
+  await env.STORE.put(key, JSON.stringify(record));
+  return { slug, record };
+}
+
+/** Checks an opened link. On success it counts the use, exactly as a typed code does. */
+export async function redeemLink(env: Env, deps: Deps, slug: string): Promise<{ hash: string; record: CodeRecord } | null> {
+  const clean = slug.trim().toLowerCase();
+  if (clean.length > 80 || !LINK_SHAPE.test(clean)) return null;
+  const linkKey = `link:${await hashLink(clean)}`;
+  const key = await env.STORE.get(linkKey);
+  const raw = key ? await env.STORE.get(key) : null;
+  if (!key || !raw) return null;
+  const record = JSON.parse(raw) as CodeRecord;
+  // The record must still point back at this link: a replaced link stops working.
+  if (record.linkKey !== linkKey || !usable(record, deps)) return null;
+  record.uses++;
+  record.lastUsedAt = deps.now().toISOString();
+  await env.STORE.put(key, JSON.stringify(record));
+  return { hash: key.slice("code:".length), record };
 }
 
 /** Checks a typed code. On success counts the use and returns the record. */

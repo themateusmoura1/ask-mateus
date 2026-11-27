@@ -8,6 +8,8 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
+    // A personal link such as /acme-k7x2q9wd3f is not a file. The page is served and tries it as a link.
+    "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*", "/admin", "/admin.html"]
   },
   // One private KV namespace holds everything that is not code: the notes,

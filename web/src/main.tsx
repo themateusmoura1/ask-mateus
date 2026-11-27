@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { Assistant } from "@/components/Assistant";
 import { ThemeToggle, useTheme } from "@/components/common";
 import { Gate } from "@/components/Gate";
-import { getConfig, getSession, type Config, type SessionInfo } from "@/lib/api";
+import { enterLink, getConfig, getSession, personalLink, type Config, type SessionInfo } from "@/lib/api";
 import "./index.css";
 
 function App() {
@@ -23,10 +23,20 @@ function App() {
   }, []);
 
   useEffect(() => {
-    void getSession().then(async (info) => {
+    void (async () => {
+      // Opened through a personal link: enter with it, then tidy the address bar.
+      const link = personalLink();
+      let failed = "";
+      if (link) {
+        const entered = await enterLink(link);
+        if (!entered.ok) failed = entered.error;
+      }
+      if (location.pathname !== "/") history.replaceState(null, "", `/${location.hash}`);
+      const info = await getSession();
       if (info.authed) await loadConfig();
+      else if (failed) setMessage(failed);
       setSession(info);
-    });
+    })();
   }, [loadConfig]);
 
   useEffect(() => {

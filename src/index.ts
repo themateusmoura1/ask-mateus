@@ -5,7 +5,7 @@ import { createRequest, decide, listRequests, notify, validate, type ContactInpu
 import { askData, describeData } from "./data-demo";
 import { approveDraft, describeDemo, detectDemo, isPipeline, orderOf, resolveDemo, runCase, runList, runResearch, sendDraft, type DemoDraft, type DemoRun } from "./demo";
 import { tierFor, tiers, writeDraft, type Route } from "./demo-model";
-import { clearCookie, createCode, listCodes, readSession, redeem, revokeCode, sessionCookie } from "./gate";
+import { clearCookie, createCode, createLink, listCodes, readSession, redeem, redeemLink, revokeCode, sessionCookie } from "./gate";
 import { enforce } from "./guard";
 import { safeRewrite, tells, tidy } from "./humanize";
 import { loadBundle } from "./kb";
@@ -63,6 +63,8 @@ function sameSecret(a: string, b: string): boolean {
 async function enter(request: Request, env: Env, deps: Deps): Promise<Response> {
   const body = await readJson(request);
   const code = typeof body?.code === "string" ? body.code : "";
+  // A personal link is a second way to enter the same code. It goes through the same limits.
+  const link = typeof body?.link === "string" ? body.link : "";
   const visitor = await visitorId(request, env, deps);
   const failKey = keys.wrongCodes(today(deps), visitor);
   const cap = settings(env).visitorDailyWrongCodes;
@@ -73,12 +75,12 @@ async function enter(request: Request, env: Env, deps: Deps): Promise<Response> 
     return json({ error: "Too many wrong codes today. Try again tomorrow." }, 429);
   }
 
-  const found = await redeem(env, deps, code);
+  const found = link ? await redeemLink(env, deps, link) : await redeem(env, deps, code);
   if (!found) {
     await takeOne(env.STORE, failKey, cap);
-    // The code that was tried is never written anywhere.
+    // The code or link that was tried is never written anywhere.
     await logEvent(env, deps, { type: "access", ok: false, label: "unknown" });
-    return json({ error: "That code didn't work. Check it and try again." }, 401);
+    return json({ error: link ? "That link didn't work. Enter your access code instead." : "That code didn't work. Check it and try again." }, 401);
   }
 
   const cookie = await sessionCookie(request, env, deps, found.hash);
@@ -592,6 +594,14 @@ async function admin(request: Request, env: Env, deps: Deps, url: URL): Promise<
     if (!label) return json({ error: "A code needs a label." }, 400);
     // The plain code is returned once, here, and stored nowhere.
     return json(await createCode(env, deps, { label, note, expiresAt, variant }));
+  }
+  const linkMatch = path.match(/^\/api\/admin\/codes\/([0-9a-f]{12})\/link$/);
+  if (linkMatch && post) {
+    const made = await createLink(env, deps, linkMatch[1]);
+    if (!made) return json({ error: "Only an active code can have a link." }, 404);
+    // The full link is returned once, here, and stored nowhere.
+    const site = (env.SITE_URL || url.origin).replace(/\/+$/, "");
+    return json({ link: `${site}/${made.slug}`, record: made.record });
   }
   const codeMatch = path.match(/^\/api\/admin\/codes\/([0-9a-f]{12})\/revoke$/);
   if (codeMatch && post) {
