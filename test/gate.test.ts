@@ -123,7 +123,7 @@ describe("per-code personalisation", () => {
     const w = world({ env: LIVE, code, modelSays: () => ({ kind: "answer", answer: "Sam ran DevRel at a large agent platform company.", sources: [] }) });
     const { reply } = await w.ask("Has Sam done DevRel before?");
     expect(reply.kind).toBe("unknown");
-    expect(reply.text).toBe(WORDS.unknown);
+    expect(WORDS.unknown).toContain(reply.text);
   });
 
   it("keeps markup out of the note that reaches the model", async () => {

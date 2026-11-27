@@ -40,7 +40,7 @@ function useApi(token: string) {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(res.status === 401 ? "Wrong token." : res.status === 404 ? "Admin is off: no ADMIN_TOKEN is set on the server." : data.error || "Something went wrong.");
+        throw new Error(res.status === 401 ? "Wrong token." : res.status === 404 ? "Admin is off: no ADMIN_TOKEN is set on the server." : data.error || "That didn't work. Try again.");
       }
       return res.json();
     },

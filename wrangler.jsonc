@@ -3,10 +3,12 @@
   "name": "ask-mateus",
   "main": "src/index.ts",
   "compatibility_date": "2026-11-01",
+  // The assistant's harness (harness/*.md) is bundled into the Worker as text.
+  "rules": [{ "type": "Text", "globs": ["**/*.md"], "fallthrough": true }],
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": ["/api/*", "/admin", "/admin.html"]
   },
   // One private KV namespace holds everything that is not code: the notes,
   // the hashed access codes, the logs, the counters and the pending requests.
@@ -38,10 +40,10 @@
     // Which providers the AI Gateway holds a key for. The gateway address itself
     // is the Worker secret AI_GATEWAY_URL, because it contains the account id.
     "GATEWAY_PROVIDERS": "anthropic,openai",
-    "MODEL": "claude-haiku-5-5",
+    "MODEL": "claude-sonnet-5-5",
     // Dollars per million tokens for MODEL. Used only for the daily spend cap.
-    "PRICE_INPUT_PER_MTOK": "0.1",
-    "PRICE_OUTPUT_PER_MTOK": "0.5",
+    "PRICE_INPUT_PER_MTOK": "2",
+    "PRICE_OUTPUT_PER_MTOK": "10",
     // The demos route work to two models by score. Below 70 goes to the fast
     // one, 70 and up to the strong one. Prices are dollars per million tokens.
     "DEMO_FAST_MODEL": "claude-haiku-5-5",

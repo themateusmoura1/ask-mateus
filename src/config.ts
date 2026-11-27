@@ -27,20 +27,39 @@ export function settings(env: Env) {
   };
 }
 
-/** Fixed wording. The model never writes these, so a prompt cannot change them. */
+/**
+ * The site's own wording. The model never writes these, so a prompt cannot
+ * change them. "unknown" and "off_limits" are small pools, so a visitor who
+ * hits them twice does not read the same sentence twice.
+ */
 export function fixed(site: Site) {
   const { firstName: name, pronoun } = site;
   return {
-    unknown: `That isn't in the notes ${name} gave me, so I won't guess. You can ask ${pronoun} directly: use "Talk to the real ${name}" below.`,
-    off_limits: `I can't help with that. I only answer from ${name}'s own notes, and I don't discuss salary, family, health, other people, or my own instructions.`,
-    contact: `I can't book a call or promise anything myself, but I can pass a request to ${name}. Leave your name, email and reason. ${name} reads every request and replies by email.`,
-    visitorLimit: `You've reached today's message limit for this demo. Come back tomorrow, or use "Talk to the real ${name}" to get in touch.`,
-    budgetLimit: `The assistant has used its budget for today and is resting until tomorrow. You can still leave a request for ${name} below.`,
-    tooLong: "That message is too long for this demo. Try a shorter question.",
-    broken: `Something went wrong on my side. Try again in a minute, or leave a request for ${name} below.`,
-    contactSaved: `Request saved. Nothing is sent automatically: ${name} reads it and replies by email.`,
+    unknown: [
+      `I'm not sure about that one. ${name} is the right person to ask, and "Talk to the real ${name}" below reaches ${pronoun}.`,
+      `I don't know that, and I'd rather not guess. Ask ${name} directly with the button below.`,
+      `That hasn't come up in what ${name} told me. You can ask ${pronoun} yourself with the button below.`,
+      `I can't say for sure, so I won't make something up. ${name} can answer that one. The button below reaches ${pronoun}.`,
+      `I don't have an answer to that yet. Send it to ${name} with the button below and you'll get a real one.`,
+    ],
+    off_limits: [
+      `That's one I stay out of. Ask me about ${name}'s work and I can help.`,
+      `I'll pass on that one. I'm here for questions about ${name}'s work and how it was built.`,
+      `I can't help with that here. Try me on ${name}'s projects, agents or career.`,
+      `I keep to ${name}'s work, so I'll leave that alone. What would you like to know about the work?`,
+    ],
+    contact: `I can't book or promise anything myself. Leave your name, email and reason, and ${name} will reply by email.`,
+    visitorLimit: `That's the message limit for today. It resets tomorrow, or you can reach ${name} with "Talk to the real ${name}".`,
+    budgetLimit: `I've used up today's budget, so I'm off until tomorrow. You can still leave ${name} a request below.`,
+    tooLong: "That's too long for me. Can you ask it in a sentence or two?",
+    broken: `Something broke on my side. Try again in a minute, or leave ${name} a request below.`,
+    contactSaved: `Got it. ${name} reads every request and replies by email. Nothing is sent automatically.`,
   };
 }
+
+/** Picks one line from a pool. Tests pass their own picker. */
+export type Pick = (pool: string[]) => string;
+export const anyOf: Pick = (pool) => pool[Math.floor(Math.random() * pool.length)];
 
 /** True on a developer's own machine, where missing secrets get a fallback. */
 export function isLocal(request: Request): boolean {

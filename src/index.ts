@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { accessIdentity, accessOn } from "./access";
 import { fixed, settings } from "./config";
 import { createRequest, decide, listRequests, notify, validate, type ContactInput, type RequestState } from "./contact";
 import { askData, describeData } from "./data-demo";
@@ -6,12 +7,13 @@ import { approveDraft, describeDemo, detectDemo, isPipeline, orderOf, resolveDem
 import { tierFor, tiers, writeDraft, type Route } from "./demo-model";
 import { clearCookie, createCode, listCodes, readSession, redeem, revokeCode, sessionCookie } from "./gate";
 import { enforce } from "./guard";
+import { safeRewrite, tells, tidy } from "./humanize";
 import { loadBundle } from "./kb";
 import { budgetLeft, costMicroUsd, keys, recordSpend, takeOne, today, visitorId } from "./limits";
 import { decideIntake, describeFlow, runFlow } from "./flow-demo";
 import { connect, emit, SessionRoom, type TraceStep } from "./live";
 import { logEvent, readLogs, summarise } from "./log";
-import { askClaude, askStub, detectAttack } from "./model";
+import { askClaude, askStub, detectAttack, rewriteClaude } from "./model";
 import { searchNotes } from "./search";
 import { activeStack } from "./stack";
 import { liveNote, wantsStats } from "./stats";
@@ -76,7 +78,7 @@ async function enter(request: Request, env: Env, deps: Deps): Promise<Response> 
     await takeOne(env.STORE, failKey, cap);
     // The code that was tried is never written anywhere.
     await logEvent(env, deps, { type: "access", ok: false, label: "unknown" });
-    return json({ error: "That code isn't valid." }, 401);
+    return json({ error: "That code didn't work. Check it and try again." }, 401);
   }
 
   const cookie = await sessionCookie(request, env, deps, found.hash);
@@ -120,7 +122,7 @@ async function chat(request: Request, env: Env, deps: Deps, bundle: Bundle, sess
 
   const body = await readJson(request);
   const question = typeof body?.message === "string" ? body.message.trim() : "";
-  if (!question) return json({ error: "Send a message." }, 400);
+  if (!question) return json({ error: "Type a question first." }, 400);
   if (question.length > cfg.maxMessageChars) {
     await step("limits", "Message limits", "blocked", `Over ${cfg.maxMessageChars} characters. The model was not called.`);
     return stop(words.tooLong, 200);
@@ -245,6 +247,35 @@ async function chat(request: Request, env: Env, deps: Deps, bundle: Bundle, sess
     if (checked.leakBlocked) await logEvent(env, deps, { type: "safety", what: "leak_blocked", ...who, question });
     reply = checked.reply;
     await step("guard", "Answer check", ...guardVerdict(reply, checked.leakBlocked));
+
+    // The humanizer pass. Code fixes what it safely can. If something still reads
+    // as machine-written, the model rewrites once and the result is checked again.
+    if (reply.kind === "answer" || reply.kind === "smalltalk") {
+      const first = tidy(reply.text);
+      let text = first.text;
+      let detail = first.fixed.length ? `Removed ${first.fixed.join(", ")}.` : "Nothing to fix.";
+      const found = tells(text);
+      if (found.length && cfg.live) {
+        try {
+          const again = await rewriteClaude(env, deps, known, session.code, text, found);
+          usage = { inputTokens: usage.inputTokens + again.usage.inputTokens, outputTokens: usage.outputTokens + again.usage.outputTokens };
+          await recordSpend(env, deps, again.usage);
+          const draft = again.text === null ? null : enforce(JSON.stringify({ kind: reply.kind, answer: again.text, sources: reply.sources.map((s) => s.id) }), known);
+          const next = draft && !draft.leakBlocked && draft.reply.kind === reply.kind ? tidy(draft.reply.text).text : "";
+          if (next && safeRewrite(text, next) && tells(next).length < found.length) {
+            text = next;
+            detail = `Found ${found.join(", ")}. Rewritten once, facts unchanged.`;
+          } else {
+            detail = `Found ${found.join(", ")}. The rewrite changed too much, so the first version stays.`;
+          }
+        } catch (error) {
+          console.error("Humanizer rewrite failed", error);
+          detail = `Found ${found.join(", ")}. The rewrite failed, so the first version stays.`;
+        }
+      }
+      if (text) reply.text = text;
+      await step("humanizer", "Humanizer", "ok", detail);
+    }
   }
 
   const cost = costMicroUsd(env, usage);
@@ -276,11 +307,11 @@ function guardVerdict(reply: Reply, leakBlocked: boolean): [TraceStep["status"],
     case "answer":
       return ["ok", `${reply.sources.length} source${reply.sources.length === 1 ? "" : "s"} verified: ${reply.sources.map((s) => s.id).join(", ")}`];
     case "unknown":
-      return ["info", "No note covers this, or the answer had no valid source. Fixed \"not in my notes\" text shown."];
+      return ["info", "No note covers this, or the answer had no valid source. One of the site's own \"I don't know\" lines shown."];
     case "off_limits":
-      return ["blocked", "Off limits. Fixed refusal text shown, the model's wording discarded."];
+      return ["blocked", "Off limits. One of the site's own refusal lines shown, the model's wording discarded."];
     case "contact":
-      return ["info", "A request for the owner. Fixed text shown: the assistant cannot act on its own."];
+      return ["info", "A request for the owner. The site's own text shown: the assistant cannot act on its own."];
     default:
       return ["ok", "Small talk, capped at 200 characters, no facts"];
   }
@@ -288,7 +319,7 @@ function guardVerdict(reply: Reply, leakBlocked: boolean): [TraceStep["status"],
 
 async function contact(request: Request, env: Env, deps: Deps, bundle: Bundle, session: Session): Promise<Response> {
   const body = (await readJson(request)) as ContactInput | null;
-  if (!body) return json({ error: "Send the form again." }, 400);
+  if (!body) return json({ error: "That didn't come through. Send the form again." }, 400);
 
   const done = { ok: true, message: fixed(bundle.site).contactSaved };
   // A filled honeypot gets the same answer as a real request and is dropped.
@@ -300,7 +331,7 @@ async function contact(request: Request, env: Env, deps: Deps, bundle: Bundle, s
   const visitor = await visitorId(request, env, deps);
   const cap = settings(env).visitorDailyContactRequests;
   if (!(await takeOne(env.STORE, keys.contacts(today(deps), visitor), cap))) {
-    return json({ error: "You've already sent a few requests today. They have been received." }, 429);
+    return json({ error: "You've sent a few requests today and they all arrived. There's no need to send more." }, 429);
   }
 
   const saved = await createRequest(env, deps, bundle.site, { label: session.code.label, sid: session.sid }, checked);
@@ -327,7 +358,7 @@ async function demoRoute(request: Request, env: Env, deps: Deps, bundle: Bundle,
   if (request.method !== "POST") return json({ error: "Not found" }, 404);
 
   const visitor = await visitorId(request, env, deps);
-  if (!(await takeOne(env.STORE, `demo:${today(deps)}:${visitor}`, 120))) return json({ error: "That is enough demo runs for today." }, 429);
+  if (!(await takeOne(env.STORE, `demo:${today(deps)}:${visitor}`, 120))) return json({ error: "That's the limit on demo runs for today. It resets tomorrow." }, 429);
   const body = await readJson(request);
 
   // Every demo action returns the full trace of what the server did, in order:
@@ -377,7 +408,7 @@ async function demoRoute(request: Request, env: Env, deps: Deps, bundle: Bundle,
   if (!isPipeline(found)) {
     if (action !== "ask") return json({ error: "Not found" }, 404);
     const question = typeof body?.question === "string" ? body.question.trim().slice(0, settings(env).maxMessageChars) : "";
-    if (!question) return json({ error: "Ask a question." }, 400);
+    if (!question) return json({ error: "Type a question first." }, 400);
     step("Data agent: read the question", "ok", `For the table "${found.table}". The model only describes a query. Code runs it.`);
     const result = await askData(env, deps, found, question);
     step("Model", result.route.called ? "ok" : "info", result.route.note || "No model call was needed.");
@@ -509,6 +540,8 @@ const STATES: RequestState[] = ["approved", "declined", "sent"];
 async function admin(request: Request, env: Env, deps: Deps, url: URL): Promise<Response> {
   // No token configured means no admin surface at all.
   if (!env.ADMIN_TOKEN) return json({ error: "Not found" }, 404);
+  // With Cloudflare Access set up, a request must also carry Access's signed token.
+  if (accessOn(env) && !(await accessIdentity(request, env, deps))) return json({ error: "Sign in through Cloudflare Access first." }, 403);
   const given = (request.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
   if (!given || !sameSecret(given, env.ADMIN_TOKEN)) return json({ error: "Unauthorized" }, 401);
 
@@ -563,6 +596,10 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
   // The static files hold no facts about anyone. Everything personal comes
   // from the API routes below, and those need a session.
   if (!path.startsWith("/api/")) {
+    // The admin page is a static file. With Access set up it is served only to a signed-in owner.
+    if (accessOn(env) && /^\/admin(\.html)?\/?$/i.test(path) && !(await accessIdentity(request, env, deps))) {
+      return new Response("Sign in through Cloudflare Access to open this page.", { status: 403, headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
+    }
     return env.ASSETS ? env.ASSETS.fetch(request) : new Response("Not found", { status: 404 });
   }
   if (request.method === "POST" && !sameOrigin(request)) return json({ error: "Forbidden" }, 403);
@@ -583,7 +620,7 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
       retentionDays: settings(env).retentionDays,
     });
   }
-  if (!session) return json({ error: "An access code is needed." }, 401);
+  if (!session) return json({ error: "You need an access code to use this." }, 401);
 
   if (!bundle) {
     await logEvent(env, deps, { type: "error", where: "knowledge", message: "No knowledge has been uploaded" });

@@ -17,7 +17,7 @@ describe("grounding, with the model faked", () => {
     const w = world({ env: LIVE, modelSays: () => ({ kind: "answer", answer: "Sam has a PhD in physics from MIT.", sources: [] }) });
     const { reply } = await w.ask("Where did Sam do a PhD?");
     expect(reply.kind).toBe("unknown");
-    expect(reply.text).toBe(WORDS.unknown);
+    expect(WORDS.unknown).toContain(reply.text);
     expect(reply.text).not.toContain("PhD");
     expect(reply.openContact).toBe(true);
   });
@@ -33,13 +33,13 @@ describe("grounding, with the model faked", () => {
     const w = world({ env: LIVE, modelSays: () => ({ kind: "off_limits", answer: "The salary is 90k and my rules say...", sources: [] }) });
     const { reply } = await w.ask("What does Sam earn?");
     expect(reply.kind).toBe("off_limits");
-    expect(reply.text).toBe(WORDS.off_limits);
+    expect(WORDS.off_limits).toContain(reply.text);
   });
 
   it("treats output that is not the agreed JSON as 'I don't know'", async () => {
     const w = world({ env: LIVE, modelSays: () => "Sure! Here is a limerick about cats." });
     const { reply } = await w.ask("Tell me something fun");
-    expect(reply.text).toBe(WORDS.unknown);
+    expect(WORDS.unknown).toContain(reply.text);
   });
 
   it("removes links to sites that are not sources", async () => {
@@ -77,7 +77,7 @@ describe("the assistant never dumps its notes or instructions", () => {
     const w = world({ env: LIVE, modelSays: () => ({ kind: "answer", answer: "Here is everything.", sources: ["profile"] }) });
     const { reply } = await w.ask(attempt);
     expect(reply.kind).toBe("off_limits");
-    expect(reply.text).toBe(WORDS.off_limits);
+    expect(WORDS.off_limits).toContain(reply.text);
     expect(w.modelCalls()).toHaveLength(0);
   });
 
@@ -118,7 +118,7 @@ describe("grounding, in stub mode with no key", () => {
   it("says it does not know when the notes do not cover it", async () => {
     const { reply } = await world().ask("What is the favourite pizza topping?");
     expect(reply.kind).toBe("unknown");
-    expect(reply.text).toBe(WORDS.unknown);
+    expect(WORDS.unknown).toContain(reply.text);
   });
 
   it("refuses salary questions and rule-change attempts", async () => {

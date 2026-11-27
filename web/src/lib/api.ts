@@ -58,7 +58,7 @@ export async function enterCode(code: string): Promise<{ ok: true } | { ok: fals
   try {
     const res = await fetch("/api/gate", { method: "POST", headers: json, body: JSON.stringify({ code }) });
     if (res.ok) return { ok: true };
-    return { ok: false, error: (await res.json()).error || "That code isn't valid." };
+    return { ok: false, error: (await res.json()).error || "That code didn't work. Check it and try again." };
   } catch {
     return { ok: false, error: "I couldn't reach the server. Try again." };
   }
@@ -88,7 +88,7 @@ export async function sendContact(form: Record<string, unknown>): Promise<{ ok: 
   try {
     const res = await fetch("/api/contact", { method: "POST", headers: json, body: JSON.stringify(form) });
     const body = await res.json();
-    return res.ok ? { ok: true, message: body.message, requestId: body.requestId } : { ok: false, error: body.error || "That didn't go through. Try again." };
+    return res.ok ? { ok: true, message: body.message, requestId: body.requestId } : { ok: false, error: body.error || "That didn't come through. Try again." };
   } catch {
     return { ok: false, error: "I couldn't reach the server. Try again." };
   }

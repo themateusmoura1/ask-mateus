@@ -46,6 +46,7 @@ describe("the live trace", () => {
       "model:running",
       "model:ok",
       "guard:ok",
+      "humanizer:ok",
       "logged:ok",
     ]);
     expect(live.sent.every((s) => s.room === sidOf(w))).toBe(true);
@@ -59,7 +60,7 @@ describe("the live trace", () => {
     expect(byId.logged).toBe("Cost $0.0120. Saved for 90 days.");
 
     // The same steps come back with the reply, for when the live connection is down.
-    expect(reply.trace.map((s: any) => s.id)).toEqual(["access", "limits", "filter", "budget", "model", "guard", "logged"]);
+    expect(reply.trace.map((s: any) => s.id)).toEqual(["access", "limits", "filter", "budget", "model", "guard", "humanizer", "logged"]);
   });
 
   it("shows which layer stopped an attack, and that the model was never called", async () => {
@@ -107,7 +108,7 @@ describe("the live trace", () => {
   it("still answers when live updates are not configured", async () => {
     const { reply, status } = await world().ask("How does the returns agent work?");
     expect(status).toBe(200);
-    expect(reply.trace.map((s: any) => s.id)).toEqual(["access", "limits", "filter", "model", "guard", "logged"]);
+    expect(reply.trace.map((s: any) => s.id)).toEqual(["access", "limits", "filter", "model", "guard", "humanizer", "logged"]);
   });
 });
 

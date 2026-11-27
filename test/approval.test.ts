@@ -82,6 +82,6 @@ describe("approval gate", () => {
     const { reply } = await world().ask("Can I book a call?");
     expect(reply.kind).toBe("contact");
     expect(reply.openContact).toBe(true);
-    expect(reply.text).toContain("I can't book a call or promise anything myself");
+    expect(reply.text).toContain("I can't book or promise anything myself");
   });
 });

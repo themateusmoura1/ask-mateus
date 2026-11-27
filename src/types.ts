@@ -67,6 +67,9 @@ export interface Env {
   NOTIFY_EMAIL_TO?: string;
   NOTIFY_EMAIL_FROM?: string;
   ADMIN_TOKEN?: string;
+  /** Cloudflare Access in front of the admin page. Both set, or both left out. */
+  ACCESS_TEAM_DOMAIN?: string;
+  ACCESS_AUD?: string;
   VISITOR_SALT?: string;
   SESSION_SECRET?: string;
 

@@ -1,4 +1,4 @@
-import { fixed } from "./config";
+import { anyOf, fixed, type Pick } from "./config";
 import { CANARY } from "./prompt";
 import type { Bundle, Draft, Kind, Note, Reply } from "./types";
 
@@ -70,14 +70,14 @@ function looksLikeDump(text: string, notes: Note[]): boolean {
  * sees, and it is plain code:
  *
  * - an answer must cite at least one real note, or it becomes "I don't know"
- * - refusals and the contact offer use fixed wording the model cannot edit
+ * - refusals and the contact offer use the site's own wording, which the model cannot edit
  * - a reply that reads like a dump of the notes or instructions is refused
  * - anything that fails to parse is treated as "I don't know"
  */
-export function enforce(raw: string | null, bundle: Bundle, declined = false): Checked {
+export function enforce(raw: string | null, bundle: Bundle, declined = false, pick: Pick = anyOf): Checked {
   const words = fixed(bundle.site);
   const say = (kind: "unknown" | "off_limits", leakBlocked = false): Checked => ({
-    reply: { kind, text: words[kind], sources: [], openContact: kind === "unknown" },
+    reply: { kind, text: pick(words[kind]), sources: [], openContact: kind === "unknown" },
     leakBlocked,
   });
 

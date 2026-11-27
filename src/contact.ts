@@ -38,9 +38,9 @@ export function validate(input: ContactInput): { ok: true; name: string; email: 
   const name = text(input.name, 80);
   const email = text(input.email, 160);
   const reason = text(input.reason, 1000);
-  if (name.length < 2) return { ok: false, error: "Please add your name." };
-  if (!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]{2,}$/.test(email)) return { ok: false, error: "That email address doesn't look right." };
-  if (reason.length < 10) return { ok: false, error: "Please say in a sentence why you'd like to talk." };
+  if (name.length < 2) return { ok: false, error: "Add your name." };
+  if (!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]{2,}$/.test(email)) return { ok: false, error: "That email doesn't look right. Check it and try again." };
+  if (reason.length < 10) return { ok: false, error: "Add a sentence on why you'd like to talk." };
   const questions = Array.isArray(input.questions)
     ? input.questions.map((q) => text(q, 300)).filter(Boolean).slice(-5)
     : [];
