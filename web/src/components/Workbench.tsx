@@ -104,29 +104,31 @@ function BotAvatar({ index, kind, size = 56 }: { index: number; kind: Look; size
   );
 }
 
+/** Every demo is asked for at once. Seven requests one after another left the shelf empty for a long time. */
 async function loadAgents(config: Config): Promise<Agent[]> {
-  const agents: Agent[] = [];
-  for (const demo of config.demos ?? []) {
-    if (demo.type === "flow") {
-      const info = await getFlow(demo.id);
-      agents.push({ key: `${demo.id}:flow`, demoId: demo.id, kind: "flow", flow: info.flow, name: info.agentName, role: info.role, company: info.company, inputs: info.scenarios });
-      continue;
-    }
-    if (demo.type === "data") {
-      const info = await getData(demo.id);
-      agents.push({ key: `${demo.id}:data`, demoId: demo.id, kind: "data", name: info.agentName, role: "Answers questions about an operations dashboard in plain words.", questions: info.examples });
-      continue;
-    }
-    const info = await getDemo(demo.id);
-    const role = (name: string, fallback: string) => info.agents.find((a) => a.name === name)?.role || fallback;
-    if (info.researchCases.length) {
-      const name = info.researcherName || "Research agent";
-      agents.push({ key: `${demo.id}:research`, demoId: demo.id, kind: "research", name, role: role(name, "Finds a company, researches it and scores it.") });
-    }
-    const name = info.senderName || "Outreach agent";
-    agents.push({ key: `${demo.id}:outreach`, demoId: demo.id, kind: "outreach", name, role: role(name, "Scores a lead and drafts the email."), leads: info.cases.map((c) => ({ id: c.id, name: c.name })) });
-  }
-  return agents;
+  const perDemo = await Promise.all(
+    (config.demos ?? []).map(async (demo): Promise<Agent[]> => {
+      if (demo.type === "flow") {
+        const info = await getFlow(demo.id);
+        return [{ key: `${demo.id}:flow`, demoId: demo.id, kind: "flow", flow: info.flow, name: info.agentName, role: info.role, company: info.company, inputs: info.scenarios }];
+      }
+      if (demo.type === "data") {
+        const info = await getData(demo.id);
+        return [{ key: `${demo.id}:data`, demoId: demo.id, kind: "data", name: info.agentName, role: "Answers questions about an operations dashboard in plain words.", questions: info.examples }];
+      }
+      const info = await getDemo(demo.id);
+      const role = (name: string, fallback: string) => info.agents.find((a) => a.name === name)?.role || fallback;
+      const found: Agent[] = [];
+      if (info.researchCases.length) {
+        const name = info.researcherName || "Research agent";
+        found.push({ key: `${demo.id}:research`, demoId: demo.id, kind: "research", name, role: role(name, "Finds a company, researches it and scores it.") });
+      }
+      const name = info.senderName || "Outreach agent";
+      found.push({ key: `${demo.id}:outreach`, demoId: demo.id, kind: "outreach", name, role: role(name, "Scores a lead and drafts the email."), leads: info.cases.map((c) => ({ id: c.id, name: c.name })) });
+      return found;
+    }),
+  );
+  return perDemo.flat();
 }
 
 // ------------------------------------------------------------------ what a run shows
@@ -218,7 +220,7 @@ function Handover({ from, to }: { from: string; to: string }) {
           <ArrowDown />
         </MarkerIcon>
         <MarkerContent>
-          {from} hands over to the {to}
+          {from} hands over to {to}
         </MarkerContent>
       </Marker>
     </Rise>
@@ -486,7 +488,8 @@ function AgentView({ agent, index, onBack }: { agent: Agent; index: number; onBa
   const run = useCallback(async (): Promise<{ result: Result; trace: TraceStep[] }> => {
     if (agent.kind === "research") {
       const data = await researchDemo(agent.demoId);
-      return { result: { kind: "research", research: data.research, outreach: data.outreach }, trace: data.trace };
+      // This agent researches, scores and hands over. The draft belongs to the next agent, so the view stops here.
+      return { result: { kind: "research", research: data.research, outreach: data.outreach }, trace: data.trace.slice(0, data.research.steps.length) };
     }
     if (agent.kind === "outreach") {
       const data = await runDemo(agent.demoId, agent.leads[turn % agent.leads.length].id);
@@ -616,9 +619,12 @@ function AgentView({ agent, index, onBack }: { agent: Agent; index: number; onBa
             {result?.kind === "research" && (
               <>
                 {result.research.score && shown >= scoreAt(result.research) ? <Score run={result.research} /> : <Loading />}
-                {shown >= result.research.steps.length && <Handover from={result.research.steps[0]?.agent ?? "Research agent"} to={result.outreach.steps.at(-1)?.agent ?? "Outreach agent"} />}
-                {result.outreach.score && shown >= result.research.steps.length + scoreAt(result.outreach) && <Score run={result.outreach} />}
-                {ending(result.outreach)}
+                {done && (
+                  <>
+                    <Handover from={result.research.steps[0]?.agent ?? "Research agent"} to={result.outreach.steps.at(-1)?.agent ?? "Outreach agent"} />
+                    <p className="text-sm text-muted-foreground">Its job ends here. It never drafts or sends. Open {result.outreach.steps.at(-1)?.agent ?? "the outreach agent"} to watch what happens next.</p>
+                  </>
+                )}
               </>
             )}
 

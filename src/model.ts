@@ -169,10 +169,11 @@ const STOPWORDS = new Set(
 );
 
 const OFF_LIMITS =
-  /\b(salary|salaries|paid|pay|earn|earns|wage|compensation|money|net worth|girlfriend|boyfriend|wife|husband|married|family|parents|kids|children|religion|politic\w*|vote|health|address|phone number|how old|age)\b/i;
+  /\b(net worth|girlfriend|boyfriend|wife|husband|married|family|parents|kids|children|religion|politic\w*|vote|health|address|phone number|how old|age)\b/i;
 const OFF_TOPIC = /\b(write|code|script|poem|essay|translate|recipe|joke|reply with|repeat after me|say exactly)\b/i;
 const CONTACT =
   /\b(book|schedule|call|meet|meeting|interview|hire|promise|talk to (him|her|them)|speak (to|with)|reach (him|her|them)|get in touch|contact (him|her|them))\b/i;
+const PAY = /\b(salary|salaries|paid|pay|earn|earns|wage|compensation|day rate|rates?|notice period)\b/i;
 const SMALLTALK = /^\s*(hi|hello|hey|hola|ol[áa]|thanks|thank you|obrigad[oa]|bye|goodbye|good (morning|afternoon|evening))\b[\s!.,]*$/i;
 
 /**
@@ -185,6 +186,7 @@ export function askStub(bundle: Bundle, question: string): Asked {
   const empty = { answer: "", sources: [] };
   const first = bundle.site.firstName;
 
+  if (PAY.test(question)) return done({ kind: "contact", ...empty });
   if (OFF_LIMITS.test(question) || OFF_TOPIC.test(question)) return done({ kind: "off_limits", ...empty });
   if (SMALLTALK.test(question)) return done({ kind: "smalltalk", answer: `Hello. What would you like to know about ${first}'s work?`, sources: [] });
   if (CONTACT.test(question)) return done({ kind: "contact", ...empty });

@@ -378,10 +378,17 @@ async function demoRoute(request: Request, env: Env, deps: Deps, bundle: Bundle,
   const began = deps.now().getTime();
   const trace: TraceStep[] = [];
   const step = (label: string, status: TraceStep["status"], detail: string) => {
-    trace.push({ id: `d${trace.length}`, label, status, detail, ms: deps.now().getTime() - began });
+    // A step recorded in the same instant as the one before it has no time of its own to show.
+    const ms = deps.now().getTime() - began;
+    const last = trace[trace.length - 1];
+    trace.push({ id: `d${trace.length}`, label, status, detail, ms: replaying || last?.ms === ms ? 0 : ms });
   };
+  // Steps of a run that already finished are listed afterwards, so they carry no timing.
+  let replaying = false;
   const stepsOf = (run: DemoRun) => {
+    replaying = true;
     for (const s of run.steps) step(`${s.agent}: ${s.title}`, s.status === "waiting" ? "info" : s.status, s.detail);
+    replaying = false;
   };
   /** The score picks the model that writes the email. */
   const draftFor = async (run: DemoRun, demo: Parameters<typeof writeDraft>[2]) => {

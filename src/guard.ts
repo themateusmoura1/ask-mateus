@@ -112,11 +112,15 @@ export function enforce(raw: string | null, bundle: Bundle, declined = false, pi
     case "answer": {
       if (looksLikeDump(draft.answer, bundle.notes)) return say("off_limits", true);
       const seen = new Set<string>();
+      const shown = new Set<string>();
       const sources = [];
       for (const id of draft.sources) {
         const note = bundle.notes.find((n) => n.id === id);
-        if (note && !seen.has(id)) {
+        // Two notes with the same source line and link would show as the same chip twice.
+        const chip = note ? `${note.source}|${note.url}` : "";
+        if (note && !seen.has(id) && !shown.has(chip)) {
           seen.add(id);
+          shown.add(chip);
           sources.push({ id: note.id, title: note.title, source: note.source, url: note.url });
         }
       }

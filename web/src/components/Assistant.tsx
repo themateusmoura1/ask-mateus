@@ -112,7 +112,8 @@ export function Assistant({ config, dark, onToggleTheme, onSignedOut }: Props) {
     async (text: string) => {
       const message = text.trim().slice(0, config.maxMessageChars);
       if (!message || busy) return;
-      started.current = true;
+      // No started.current here: typing a question does not switch the voice on.
+      // The orb or the microphone does that.
       voice.unlock();
       voice.stop();
       setBusy(true);

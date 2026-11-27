@@ -228,3 +228,27 @@ describe("the demos keep to the same limits as everything else", () => {
     expect(reply.demo).toBe("support");
   });
 });
+
+describe("the reviewer's countable checks", () => {
+  it("counts words in code, so a text under the limit can't fail on length", async () => {
+    const { countable } = await import("../src/flow-demo");
+    const short = "This photo is over the 10 MB limit. Choose a smaller photo, or reduce its size, and try again.";
+    expect(countable("At most 25 words", short)).toEqual({ pass: true, note: "" });
+    const long = Array.from({ length: 26 }, () => "word").join(" ");
+    expect(countable("At most 25 words", long)).toEqual({ pass: false, note: "26 words. The limit is 25." });
+  });
+
+  it("finds exclamation marks and the quoted banned words", async () => {
+    const { countable } = await import("../src/flow-demo");
+    const label = "No exclamation marks, and no 'please' or 'sorry'";
+    expect(countable(label, "Choose a smaller photo.")).toEqual({ pass: true, note: "" });
+    expect(countable(label, "Sorry! Please try again.")?.pass).toBe(false);
+    expect(countable(label, "Pleased to help.")?.pass).toBe(true);
+  });
+
+  it("leaves judgement items to the reviewer", async () => {
+    const { countable } = await import("../src/flow-demo");
+    expect(countable("Does not blame the person", "anything")).toBeNull();
+  });
+});
+
